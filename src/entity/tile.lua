@@ -33,8 +33,8 @@ function entity:load(data)
     self.height = worldGen.tileSize
     self.x = data.x--floor(data.x / self.width) * self.width
     self.y = data.y--floor(data.y / self.height) * self.height
-    self.gridX = math.floor(self.x / config.graphics.tileSize * scale_x)
-    self.gridY = math.floor(self.y / config.graphics.tileSize * scale_x)
+    self.gridX = math.floor(self.x / floor(config.graphics.tileSize * scale_x))
+    self.gridY = math.floor(self.y / floor(config.graphics.tileSize * scale_x))
     self.hover = false
 
     self.texture = data.texture or false
@@ -94,8 +94,11 @@ function entity:draw()
             local maxDistance = config.graphics.lightDistance * scale_x
 
             shade = 1 - (1 / maxDistance) * distanceFromPlayer
+            if shade < config.graphics.ambientLight then
+                shade = config.graphics.ambientLight
+            end
             if not los then
-                shade = 0
+                shade = config.graphics.ambientLight
             end
         end
 

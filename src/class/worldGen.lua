@@ -3,8 +3,8 @@ local worldGen = {}
 function worldGen:load(data)
     -- World gen settings
     self.chunkSize = 6
-    self.tileSize = config.graphics.tileSize * scale_x
-    self.renderDistance = 2 -- How many chunks in each direction to generate at a time
+    self.tileSize = floor(config.graphics.tileSize * scale_x)
+    self.renderDistance = 3 -- How many chunks in each direction to generate at a time
     self.maxChunkDistance = 6 -- How far, In chunk coordinates before a chunk is unloaded
 
 

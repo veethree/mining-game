@@ -40,6 +40,7 @@ function love.load()
         graphics = {
             useLight = true,
             lightDistance = 400,
+            ambientLight = 0.15,
             tileSize = 32,
             assetSize = 16
         },

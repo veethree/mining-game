@@ -19,8 +19,8 @@ return {
             e.y = e.y - speed * dt
         end
 
-        e.gridX = math.floor(e.x / config.graphics.tileSize * scale_x)
-        e.gridY = math.floor(e.y / config.graphics.tileSize * scale_x)
+        e.gridX = math.floor(e.x / floor(config.graphics.tileSize * scale_x))
+        e.gridY = math.floor(e.y / floor(config.graphics.tileSize * scale_x))
 
         e._SPATIAL.spatial:update_item_cell(e.x, e.y, e)
     end
