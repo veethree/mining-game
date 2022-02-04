@@ -39,6 +39,8 @@ function entity:load(data)
 
     self.texture = data.texture or false
     self.type = data.color
+    self.biome = data.biome
+    print(self.biome)
 
     -- Tile type data
     self.maxHP = false
@@ -107,11 +109,15 @@ function entity:draw()
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
         else
             lg.setColor(1, 1, 1, shade)
+            if self.biome == 2 then
+                lg.setColor(0, 0, 1, shade)
+            end
             lg.draw(tileAtlas, tiles[self.type], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             lg.setBlendMode("multiply", "premultiplied")
-            lg.setColor(0.9, 0.6, 0.3, shade)
+            lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
             lg.setBlendMode("alpha")
+
         end
 
         if self.hover then

@@ -6,6 +6,7 @@ love.mouse = require("love.mouse")
 local noiseScale = 0.13
 local noiseScaleOre = 0.1
 local noiseScaleOre2 = 0.01
+local noiseScaleBiome = 0.0001
 
 local ground = 1--{0.5, 0.5, 0.5}
 local ground2 = {0.51, 0.51, 0.51}
@@ -38,11 +39,14 @@ if type(chunksToGenerate) == "table" then
                 local worldX = chunkWorldX + (x * tileSize)
                 local worldY = chunkWorldY + (y * tileSize)
                 local tile = wall
+                local biome = 1
                 local noiseBase = love.math.noise(tileX * noiseScale, tileY * noiseScale, tonumber(seed))
+                local noiseBiome = love.math.noise(tileX * noiseScaleBiome, tileY * noiseScaleBiome, tonumber(seed) + 300)
                 local noiseCoal = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed))
                 local noiseIron = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed), 100)
                 local noiseDiamond = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed), 200)
-                if noiseBase > 0.4 then
+                local scale = 0.4
+                if noiseBase > scale then
                     tile = ground
 
                     if love.math.random() < 0.0002 then
@@ -60,7 +64,7 @@ if type(chunksToGenerate) == "table" then
                     end
                 end
 
-                chunk[y][x] = {type = tile, x = worldX, y = worldY}
+                chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}
             end
         end
 
@@ -105,7 +109,7 @@ if type(chunksToGenerate) == "table" then
             for x=1, #chunk[1] do
                 local tile = chunk[y][x]
                 if tile.type ~= wall then
-                    finalChunk.tiles[#finalChunk.tiles+1] = {x = tile.x, y = tile.y, color = tile.type}
+                    finalChunk.tiles[#finalChunk.tiles+1] = {x = tile.x, y = tile.y, color = tile.type, biome = tile.biome}
                 end
             end
         end

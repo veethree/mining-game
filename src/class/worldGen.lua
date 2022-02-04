@@ -32,8 +32,8 @@ function worldGen:findPlayerSpawnTile()
             local spawnX, spawnY = 0, 0
             for _, tile in ipairs(chunk.tiles) do
                 if tile.type == 1 then
-                    spawnX = tile.x
-                    spawnY = tile.y
+                    spawnX = tile.x - self.tileSize
+                    spawnY = tile.y - self.tileSize
                     break
                 end
             end
@@ -73,8 +73,6 @@ function worldGen:updateChunks(chunkX, chunkY)
         end
     end
 
-    print("Generating "..#chunksToGenerate.." chunks. Spawning ~"..#chunksToGenerate * 36 .." tile entities")
-
     self.thread:start(chunksToGenerate, self.chunkSize, self.tileSize, seed)
 end
 
@@ -100,7 +98,7 @@ function worldGen:update(dt)
                 tiles = {}
             }
             for i,v in ipairs(chunk.tiles) do
-                local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, color = v.color}) 
+                local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, color = v.color, biome = v.biome}) 
                 self.chunks[chunk.y][chunk.x].tiles[#self.chunks[chunk.y][chunk.x].tiles + 1] = tile
 
                 if not self.tiles[tile.gridY] then
@@ -125,10 +123,6 @@ function worldGen:update(dt)
                 chunksToUnload = chunksToUnload + 1
             end
         end
-    end
-
-    if chunksToUnload > 0 then
-        print("Unloading "..chunksToUnload.." chunks")
     end
 
     --Counting loaded chunks
