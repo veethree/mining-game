@@ -43,6 +43,7 @@ local tileData = {
 }
 
 function entity:load(data)
+    self.entityType = "tile"
     self.visible = true
     self.width = worldGen.tileSize
     self.height = worldGen.tileSize

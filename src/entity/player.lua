@@ -1,9 +1,12 @@
 local entity = {}
 
 function entity:load(data)
+    self.entityType = "player"
     self.visible = false
     self.x = data.x--floor(data.x / self.width) * self.width
     self.y = data.y--floor(data.y / self.height) * self.height
+    self.gridX = 0
+    self.gridY = 0
     self.chunkX = 0
     self.chunkY = 0
     self.oChunkX = 0

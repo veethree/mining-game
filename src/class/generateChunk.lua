@@ -1,39 +1,82 @@
 local chunksToGenerate, chunkSize, tileSize, seed = ...
 
+seed = tonumber(seed)
+
 love.math = require("love.math")
 love.mouse = require("love.mouse")
 
-local noiseScale = 0.13
+local noise = love.math.noise
 
+local noiseScale = 0.6
+
+-- Base shape as well
 local ground = 1--{0.5, 0.5, 0.5}
 
+-- Determines the base shape of the caves
+function caveNoise(x, y, scale)
+    local scaleBase = 0.09 * scale
+    local scaleDetail = 0.3 * scale
+    local thresh = 0.45
+    return noise(x * scaleBase, y * scaleBase, seed) * 0.7 + noise(x * scaleDetail, y * scaleDetail, seed) * 0.3 > thresh and true or false
+end
+
 local coal = 2--{1, 0.5, 0}
-local coalNoiseScale = 0.1
-local coalThreshold = 0.74
+
+function coalNoise(x, y, scale)
+    local scaleBase = 0.04 * scale
+    local scaleDetail = 0.15 * scale
+    local thresh = 0.65
+    return noise(x * scaleBase, y * scaleBase, seed + 100) * 0.3 + noise(x * scaleDetail, y * scaleDetail, seed + 100) * 0.7 > thresh and true or false
+end
 
 local iron = 3--{0, 0.5, 1}
-local ironNoiseScale =  0.15
-local ironThreshold = 0.78
+
+function ironNoise(x, y, scale)
+    local scaleBase = 0.02 * scale
+    local scaleDetail = 0.3 * scale
+    local thresh = 0.7
+    return noise(x * scaleBase, y * scaleBase, seed + 200) * 0.3 + noise(x * scaleDetail, y * scaleDetail, seed + 200) * 0.7 > thresh and true or false
+end
 
 local gold = 4
-local goldNoiseScale = 0.09
-local goldthreshold = 0.8
+function goldNoise(x, y, scale)
+    local scaleBase = 0.1 * scale
+    local scaleDetail = 0.6 * scale
+    local thresh = 0.8
+    return noise(x * scaleBase, y * scaleBase, seed + 300) * 0.4 + noise(x * scaleDetail, y * scaleDetail, seed + 300) * 0.7 > thresh and true or false
+end
 
 local uranium = 5
-local uraniumNoiseScale = 0.2
-local uraniumThreshold = 0.85
+function uraniumNoise(x, y, scale)
+    local scaleBase = 0.2 * scale
+    local scaleDetail = 0.6 * scale
+    local thresh = 0.8
+    return noise(x * scaleBase, y * scaleBase, seed + 400) * 0.4 + noise(x * scaleDetail, y * scaleDetail, seed + 400) * 0.7 > thresh and true or false
+end
 
 local diamond = 6
-local diamondNoiseScale = 0.2
-local diamondThreshold = 0.81
+function diamondNoise(x, y, scale)
+    local scaleBase = 0.04 * scale
+    local scaleDetail = 0.06 * scale
+    local thresh = 0.88
+    return noise(x * scaleBase, y * scaleBase, seed + 500) * 0.5 + noise(x * scaleDetail, y * scaleDetail, seed + 500) * 0.7 > thresh and true or false
+end
 
 local ruby = 7
-local rubyNoiseScale = 0.1
-local rubyThreshold = 0.81
+function rubyNoise(x, y, scale)
+    local scaleBase = 0.09 * scale
+    local scaleDetail = 0.18 * scale
+    local thresh = 0.91
+    return noise(x * scaleBase, y * scaleBase, seed + 600) * 0.5 + noise(x * scaleDetail, y * scaleDetail, seed + 600) * 0.7 > thresh and true or false
+end
 
 local tanzenite = 8
-local tanzeniteNoiseScale = 0.01
-local tanzeniteThreshold = 0.7
+function tanzeniteNoise(x, y, scale)
+    local scaleBase = 0.09 * scale
+    local scaleDetail = 0.18 * scale
+    local thresh = 0.91
+    return noise(x * scaleBase, y * scaleBase, seed + 700) * 0.5 + noise(x * scaleDetail, y * scaleDetail, seed + 700) * 0.7 > thresh and true or false
+end
 
 local tiles = {}
 
@@ -62,58 +105,38 @@ if type(chunksToGenerate) == "table" then
                 local tile = wall
                 local biome = 1
 
-                -- Noises
-                local noiseBase = love.math.noise(tileX * noiseScale, tileY * noiseScale, tonumber(seed))
-                local noiseCoal = love.math.noise(tileX * coalNoiseScale, tileY * coalNoiseScale, tonumber(seed))
-                local noiseIron = love.math.noise(tileX * ironNoiseScale, tileY * ironNoiseScale, tonumber(seed + 100))
-                local noiseGold = love.math.noise(tileX * goldNoiseScale, tileY * goldNoiseScale, tonumber(seed + 200))
-                local noiseUranium = love.math.noise(tileX * uraniumNoiseScale, tileY * uraniumNoiseScale, tonumber(seed + 300))
-                local noiseDiamond = love.math.noise(tileX * diamondNoiseScale, tileY * diamondNoiseScale, tonumber(seed + 400))
-                local noiseRuby = love.math.noise(tileX * rubyNoiseScale, tileY * rubyNoiseScale, tonumber(seed + 500))
-                local noiseTanzenite = love.math.noise(tileX * tanzeniteNoiseScale, tileY * tanzeniteNoiseScale, tonumber(seed + 600))
-
-
                 -- Tile type deciding
-                local scale = 0.4
-                if noiseBase > scale then
+                if caveNoise(tileX, tileY, noiseScale) then
                     tile = ground
 
-                    -- COAL
-                    if noiseCoal > coalThreshold then
-                        tile = coal 
+                    -- Coalies
+                    if coalNoise(tileX, tileY, noiseScale) then
+                        tile = coal
                     end
-
-                    -- IRON
-                    if noiseIron > ironThreshold then
-                        tile = iron 
+                    -- ironistas
+                    if ironNoise(tileX, tileY, noiseScale) then
+                        tile = iron
                     end
-
-                    -- GOLD
-                    if noiseGold > goldthreshold then
-                        tile = gold 
+                    -- goldielocsk
+                    if goldNoise(tileX, tileY, noiseScale) then
+                        tile = gold
                     end
-
-                    -- URANIUM
-                    if noiseUranium > uraniumThreshold then
+                    -- hulstuff
+                    if uraniumNoise(tileX, tileY, noiseScale) then
                         tile = uranium
                     end
-
-                    -- DIAMOND
-                    if noiseDiamond > diamondThreshold then
+                    -- These are forever
+                    if diamondNoise(tileX, tileY, noiseScale) then
                         tile = diamond
                     end
-
-                    -- RUBY
-                    if noiseRuby > rubyThreshold then
+                    -- Blood diamodns
+                    if rubyNoise(tileX, tileY, noiseScale) then
                         tile = ruby
                     end
-
-                    -- TANZENITE
-                    if noiseTanzenite > tanzeniteThreshold then
+                    -- The rare shit
+                    if tanzeniteNoise(tileX, tileY, noiseScale) then
                         tile = tanzenite
                     end
-
-
                 end
 
                 chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}

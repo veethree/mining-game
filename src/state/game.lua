@@ -40,9 +40,10 @@ function game:draw()
     camera:push()
     self.world:update(entity_list)
 
+
     self.player:draw()
     camera:pop()
-
+    
 
     -- PLAYER INVENTORY
     local i = 0
@@ -58,8 +59,34 @@ function game:draw()
 
     lg.setColor(1, 0.5, 0)
     local all, all_len = self.world:query()
-    lg.print("entities: "..len.."/"..all_len.."\nX: "..floor(self.player.x).." Y: "..floor(self.player.y), 12, 24)
+    lg.print("entities: "..len.."/"..all_len.."\nX: "..floor(self.player.x).." Y: "..floor(self.player.y), 12, 80)
     worldGen:draw()
+
+    -- Minimap
+    local minimapScale = 4
+    local minimapX = lg.getWidth() * 0.8
+    local minimapY = lg.getHeight() * 0.8
+
+    local miniMapColors = {
+        {1, 1, 1, 1},
+        {0.5, 0.5, 0.5},
+        {0.8, 0.7, 0.5},
+        {0.9, 0.9, 0.1},
+        {0.1, 0.9, 0.1},
+        {0.1, 0.7, 0.9},
+        {0.9, 0.1, 0.1},
+        {0.1, 0.1, 0.9},
+    }
+    for i,v in ipairs(all) do
+        if v.entityType == "tile" then
+            lg.setColor(miniMapColors[v.type])
+            lg.rectangle("fill", minimapX + v.gridX * minimapScale - (self.player.gridX * minimapScale), minimapY + v.gridY * minimapScale - (self.player.gridY * minimapScale), minimapScale, minimapScale)
+        elseif v.entityType == "player" then
+            lg.setColor(0, 1, 0)
+            lg.rectangle("fill", minimapX + v.gridX * minimapScale - (self.player.gridX * minimapScale), minimapY + v.gridY * minimapScale - (self.player.gridY * minimapScale), minimapScale, minimapScale)
+        end
+    end
+
 
 end
 

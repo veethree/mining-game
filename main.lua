@@ -35,7 +35,7 @@ function love.load()
         window = {
             width = 1024,
             height = 576,
-            fullscreen = true,
+            fullscreen = false,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
@@ -49,7 +49,8 @@ function love.load()
         debug = {
             enabled = true,
             text_color = {255, 144, 79},
-            showChunkBorders = false
+            showChunkBorders = false,
+            saveChunks = false
         }
     }
 

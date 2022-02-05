@@ -78,29 +78,31 @@ end
 
 -- Stores a chunk in a file
 function worldGen:saveChunkToFile(chunk)
-    if not fs.getInfo("chunks") then
-        fs.createDirectory("chunks") 
-    end
-    local outputName = "chunks/("..chunk.x..")("..chunk.y..").lua"
-    local output = {
-        x = chunk.x,
-        y = chunk.y,
-        modified = true,
-        tiles = {}
-    }
-    for i, tile in ipairs(chunk.tiles) do
-        output.tiles[i] = {
-            x = tile.x,
-            y = tile.y,
-            biome = tile.biome,
-            type = tile.type,
-            maxHP = tile.maxHP,
-            hp = tile.hp
+    if config.debug.saveChunks then
+        if not fs.getInfo("chunks") then
+            fs.createDirectory("chunks") 
+        end
+        local outputName = "chunks/("..chunk.x..")("..chunk.y..").lua"
+        local output = {
+            x = chunk.x,
+            y = chunk.y,
+            modified = true,
+            tiles = {}
         }
-    end
+        for i, tile in ipairs(chunk.tiles) do
+            output.tiles[i] = {
+                x = tile.x,
+                y = tile.y,
+                biome = tile.biome,
+                type = tile.type,
+                maxHP = tile.maxHP,
+                hp = tile.hp
+            }
+        end
 
-    ttf.save(output, outputName)
-    print("Saving chunk "..chunk.x.."x"..chunk.y.." to disk.")
+        ttf.save(output, outputName)
+        print("Saving chunk "..chunk.x.."x"..chunk.y.." to disk.")
+    end
 end
 
 function worldGen:loadChunkFromFile(x, y)
