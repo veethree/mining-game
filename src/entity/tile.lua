@@ -7,22 +7,37 @@ local tileData = {
     },
     {
         type = "Coal",
-        maxHP = 3,
+        maxHP = 2,
         drop = {3, 6}
     },
     {
-        type = "Diamond",
+        type = "Iron",
         maxHP = 10,
         drop = {1, 3}
     },
     {
-        type = "Iron",
+        type = "Gold",
         maxHP = 5,
-        drop = {1, 3}
+        drop = {1, 2}
+    },
+    {
+        type = "Uranium",
+        maxHP = 20,
+        drop = {1, 1}
+    },
+    {
+        type = "Diamond",
+        maxHP = 15,
+        drop = {1, 2}
     },
     {
         type = "Ruby",
-        maxHP = 20,
+        maxHP = 18,
+        drop = {1, 1}
+    },
+    {
+        type = "Tanzenite",
+        maxHP = 30,
         drop = {1, 1}
     },
 }
@@ -38,9 +53,8 @@ function entity:load(data)
     self.hover = false
 
     self.texture = data.texture or false
-    self.type = data.color
+    self.type = data.type
     self.biome = data.biome
-    print(self.biome)
 
     -- Tile type data
     self.maxHP = false
@@ -56,12 +70,14 @@ function entity:mine()
         self.hp = self.hp - 1
         if self.hp < 1 then
             if not _PLAYER.inventory[tileData[self.type].type] then
-            _PLAYER.inventory[tileData[self.type].type] = 0
+                _PLAYER.inventory[tileData[self.type].type] = 0
             end
 
             _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + random(tileData[self.type].drop[1], tileData[self.type].drop[2])
             self.hp = false
             self.type = 1
+
+            self.chunk.modified = true
         end
     end
 end
@@ -69,16 +85,8 @@ end
 function entity:draw()
     --lg.setColor(self.color)
     --lg.rectangle("fill", self.x, self.y, self.width, self.height)
-    -- Selection
-    self.hover = false
-    local mx, my = camera:getMouse()
-    if mx > self.x and mx < self.x + self.width and my > self.y and my < self.y + self.height then
-        if fmath.distance(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY) < _PLAYER.reach then
-            self.hover = true
-        end
-    end
 
-    if _PLAYER then
+    if _PLAYER and _PLAYER.control then
 
         -- Checking if tile is visible to player via bresenham.lua hopefully we will see if this even works lol say hi to your mom for me
         local los =  bresenham.los(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY, function(x, y)
@@ -110,14 +118,23 @@ function entity:draw()
         else
             lg.setColor(1, 1, 1, shade)
             if self.biome == 2 then
-                lg.setColor(0, 0, 1, shade)
+                lg.setColor(0.8, 0.5, 1, shade)
             end
-            lg.draw(tileAtlas, tiles[self.type], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+            lg.draw(tileAtlas, tiles[self.type + 18], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             lg.setBlendMode("multiply", "premultiplied")
             lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
             lg.setBlendMode("alpha")
 
+        end
+
+        -- Selection
+        self.hover = false
+        local mx, my = camera:getMouse()
+        if mx > self.x and mx < self.x + self.width and my > self.y and my < self.y + self.height then
+            if fmath.distance(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY) < _PLAYER.reach and los then
+                self.hover = true
+            end
         end
 
         if self.hover then
@@ -127,13 +144,12 @@ function entity:draw()
             lg.setBlendMode("alpha")
         end
 
-        local a = 0
+        -- Breaking
         if self.hp then
-            a = 1 - (1 / self.maxHP) * self.hp
-            lg.setBlendMode("add")
-            lg.setColor(1, 1, 1, a)
-            lg.rectangle("fill", self.x, self.y, self.width, self.height)
-            lg.setBlendMode("alpha")
+            if self.hp < self.maxHP then
+                local frame = #tileBreak - math.floor((#tileBreak / self.maxHP) * self.hp)
+                lg.draw(tileBreakImg, tileBreak[frame], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+            end
         end
 
     end

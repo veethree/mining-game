@@ -16,6 +16,16 @@ function game:load(data)
 
     worldGen:load({player = self.player, world = self.world})
     self.renderBuffer = worldGen.tileSize * 2
+
+    self.icon = {
+        Coal = 1,
+        Iron = 2,
+        Gold = 3,
+        Uranium = 4,
+        Diamond = 5,
+        Ruby = 6,
+        Tanzenite = 7
+    }
 end
 
 function game:update(dt)
@@ -34,9 +44,15 @@ function game:draw()
     camera:pop()
 
 
+    -- PLAYER INVENTORY
     local i = 0
     for k, v in pairs(self.player.inventory) do
-        lg.printf(k..": "..v, -12, 24 + 24 * i, lg.getWidth(), "right")
+        local x = 24 + ((config.graphics.tileSize * 1.3 ) * scale_x * i) 
+        local y = lg.getHeight() - 40
+        lg.draw(tileAtlas, tiles[self.icon[k]], x, y - 50 , 0, (config.graphics.tileSize * scale_x) / config.graphics.assetSize, (config.graphics.tileSize * scale_x) / config.graphics.assetSize)
+
+        lg.setColor(1, 1, 1, 1)
+        lg.printf(v, x + 10, y, lg.getWidth(), "left")
         i = i + 1
     end
 

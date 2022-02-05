@@ -5,7 +5,7 @@ function worldGen:load(data)
     self.chunkSize = 6
     self.tileSize = floor(config.graphics.tileSize * scale_x)
     self.renderDistance = 3 -- How many chunks in each direction to generate at a time
-    self.maxChunkDistance = 6 -- How far, In chunk coordinates before a chunk is unloaded
+    self.maxChunkDistance = self.renderDistance * 2 -- How far, In chunk coordinates before a chunk is unloaded
 
 
     self.player = data.player
@@ -76,6 +76,71 @@ function worldGen:updateChunks(chunkX, chunkY)
     self.thread:start(chunksToGenerate, self.chunkSize, self.tileSize, seed)
 end
 
+-- Stores a chunk in a file
+function worldGen:saveChunkToFile(chunk)
+    if not fs.getInfo("chunks") then
+        fs.createDirectory("chunks") 
+    end
+    local outputName = "chunks/("..chunk.x..")("..chunk.y..").lua"
+    local output = {
+        x = chunk.x,
+        y = chunk.y,
+        modified = true,
+        tiles = {}
+    }
+    for i, tile in ipairs(chunk.tiles) do
+        output.tiles[i] = {
+            x = tile.x,
+            y = tile.y,
+            biome = tile.biome,
+            type = tile.type,
+            maxHP = tile.maxHP,
+            hp = tile.hp
+        }
+    end
+
+    ttf.save(output, outputName)
+    print("Saving chunk "..chunk.x.."x"..chunk.y.." to disk.")
+end
+
+function worldGen:loadChunkFromFile(x, y)
+    local fileName = "chunks/("..x..")("..y..").lua"
+    if not fs.getInfo(fileName) then
+        return false
+    end    
+
+    print("Loading chunk "..x.." x "..y.." from disk.")
+    local chunk = fs.load(fileName)()
+    if not self.chunks[chunk.y] then self.chunks[chunk.y] = {} end
+    if self.chunks[chunk.y][chunk.x] then
+        for i,v in ipairs(self.chunks[chunk.y][chunk.x].tiles) do
+            v._REMOVE = true
+        end
+    end
+    self.chunks[chunk.y][chunk.x] = {
+        x = chunk.x,
+        y = chunk.y,
+        modified = true,
+        tiles = {}
+    }
+
+    for i,v in ipairs(chunk.tiles) do
+        local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, type = v.type, biome = v.biome}) 
+        tile.chunk = self.chunks[chunk.y][chunk.x]
+        self.chunks[chunk.y][chunk.x].tiles[#self.chunks[chunk.y][chunk.x].tiles + 1] = tile
+
+        if not self.tiles[tile.gridY] then
+            self.tiles[tile.gridY] = {}
+        end
+
+        self.tiles[tile.gridY][tile.gridX] = tile
+    end
+end
+
+function worldGen:chunkFileExists(x, y)
+    return fs.getInfo("chunks/("..x..")("..y..").lua") and true or false
+end
+
 function worldGen:update(dt)
     -- Checking if player has entered a new chunk
     self.player.chunkX = floor(self.player.x / (self.chunkSize * self.tileSize))
@@ -90,22 +155,28 @@ function worldGen:update(dt)
     -- Thread shit
     local chunk = lt.getChannel("worldGen"):pop()
     if chunk then
-        if not self.chunks[chunk.y] then self.chunks[chunk.y] = {} end
-        if self.chunks[chunk.y][chunk.x] == nil then
-            self.chunks[chunk.y][chunk.x] = {
-                x = chunk.x,
-                y = chunk.y,
-                tiles = {}
-            }
-            for i,v in ipairs(chunk.tiles) do
-                local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, color = v.color, biome = v.biome}) 
-                self.chunks[chunk.y][chunk.x].tiles[#self.chunks[chunk.y][chunk.x].tiles + 1] = tile
+        if self:chunkFileExists(chunk.x, chunk.y) then
+            self:loadChunkFromFile(chunk.x, chunk.y)
+        else
+            if not self.chunks[chunk.y] then self.chunks[chunk.y] = {} end
+            if self.chunks[chunk.y][chunk.x] == nil then
+                self.chunks[chunk.y][chunk.x] = {
+                    x = chunk.x,
+                    y = chunk.y,
+                    modified = false,
+                    tiles = {}
+                }
+                for i,v in ipairs(chunk.tiles) do
+                    local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, type = v.type, biome = v.biome}) 
+                    tile.chunk = self.chunks[chunk.y][chunk.x]
+                    self.chunks[chunk.y][chunk.x].tiles[#self.chunks[chunk.y][chunk.x].tiles + 1] = tile
 
-                if not self.tiles[tile.gridY] then
-                    self.tiles[tile.gridY] = {}
+                    if not self.tiles[tile.gridY] then
+                        self.tiles[tile.gridY] = {}
+                    end
+
+                    self.tiles[tile.gridY][tile.gridX] = tile
                 end
-
-                self.tiles[tile.gridY][tile.gridX] = tile
             end
         end
     end
@@ -115,6 +186,11 @@ function worldGen:update(dt)
     for y,col in pairs(self.chunks) do
         for x, chunk in pairs(col) do
             if fmath.distance(self.player.chunkX, self.player.chunkY, x, y) > self.maxChunkDistance then
+                -- Saving chunk if modified
+                if chunk.modified then
+                    self:saveChunkToFile(chunk)
+                end
+
                 for i,v in ipairs(chunk.tiles) do
                     self.tiles[v.gridY][v.gridX] = nil
                     v._REMOVE = true
@@ -141,9 +217,15 @@ function worldGen:draw()
 
     if config.debug.showChunkBorders then
         camera:push()
-        lg.setColor(1, 1, 0)
+
         for _, col in pairs(self.chunks) do
             for _, chunk in pairs(col) do
+                lg.setColor(1, 1, 0)
+                if chunk.modified then
+                    lg.setColor(1, 0, 1)
+                end
+                lg.print(chunk.x.." x "..chunk.y.."\nModified: "..tostring(chunk.modified), chunk.x * self.chunkSize * self.tileSize + self.tileSize, chunk.y * self.chunkSize * self.tileSize + self.tileSize)
+
                 lg.rectangle("line", chunk.x * self.chunkSize * self.tileSize + self.tileSize, chunk.y * self.chunkSize * self.tileSize + self.tileSize, self.chunkSize * self.tileSize, self.chunkSize * self.tileSize) 
             end
         end
@@ -151,7 +233,7 @@ function worldGen:draw()
         lg.setColor(0, 1, 1)
         for _, col in pairs(self.tiles) do
             for _, tile in pairs(col) do
-                lg.print(tile.gridX.."x"..tile.gridY, tile.x + 1, tile.y + 1)
+                lg.rectangle("line", tile.x + 1, tile.y + 1, tile.width, tile.height)
             end
         end
 

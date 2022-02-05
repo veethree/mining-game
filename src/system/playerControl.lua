@@ -8,15 +8,25 @@ return {
         local space = kb.isDown("space")
         local speed = e.speed
         if space then speed = e.speed * 5 end
+
+        e.moving = false
         if right then
             e.x = e.x + speed * dt
+            e.moving = true
+            e.direction = "right"
         elseif left then
             e.x = e.x - speed * dt
+            e.moving = true
+            e.direction = "left"
         end
         if down then
             e.y = e.y + speed * dt
+            e.moving = true
+            e.direction = "backward"
         elseif up then
             e.y = e.y - speed * dt
+            e.moving = true
+            e.direction = "forward"
         end
 
         e.gridX = math.floor(e.x / floor(config.graphics.tileSize * scale_x))

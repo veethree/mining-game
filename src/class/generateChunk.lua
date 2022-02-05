@@ -4,18 +4,36 @@ love.math = require("love.math")
 love.mouse = require("love.mouse")
 
 local noiseScale = 0.13
-local noiseScaleOre = 0.1
-local noiseScaleOre2 = 0.01
-local noiseScaleBiome = 0.0001
 
 local ground = 1--{0.5, 0.5, 0.5}
-local ground2 = {0.51, 0.51, 0.51}
-local wallEdge = 1--{0.3, 0.3, 0.3}
-local wall = {0, 0, 0}
+
 local coal = 2--{1, 0.5, 0}
-local iron = 4--{0, 0.5, 1}
-local diamond = 3
-local ruby = 5
+local coalNoiseScale = 0.1
+local coalThreshold = 0.74
+
+local iron = 3--{0, 0.5, 1}
+local ironNoiseScale =  0.15
+local ironThreshold = 0.78
+
+local gold = 4
+local goldNoiseScale = 0.09
+local goldthreshold = 0.8
+
+local uranium = 5
+local uraniumNoiseScale = 0.2
+local uraniumThreshold = 0.85
+
+local diamond = 6
+local diamondNoiseScale = 0.2
+local diamondThreshold = 0.81
+
+local ruby = 7
+local rubyNoiseScale = 0.1
+local rubyThreshold = 0.81
+
+local tanzenite = 8
+local tanzeniteNoiseScale = 0.01
+local tanzeniteThreshold = 0.7
 
 local tiles = {}
 
@@ -34,34 +52,68 @@ if type(chunksToGenerate) == "table" then
         for y=1, chunkSize do
             chunk[y] = {}
             for x=1, chunkSize do
+                -- Coordinates
                 local tileX = (v.x * chunkSize) + x
                 local tileY = (v.y * chunkSize) + y
                 local worldX = chunkWorldX + (x * tileSize)
                 local worldY = chunkWorldY + (y * tileSize)
+
+                -- Tile setup
                 local tile = wall
                 local biome = 1
+
+                -- Noises
                 local noiseBase = love.math.noise(tileX * noiseScale, tileY * noiseScale, tonumber(seed))
-                local noiseBiome = love.math.noise(tileX * noiseScaleBiome, tileY * noiseScaleBiome, tonumber(seed) + 300)
-                local noiseCoal = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed))
-                local noiseIron = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed), 100)
-                local noiseDiamond = love.math.noise(tileX * noiseScaleOre, tileY * noiseScaleOre, tonumber(seed), 200)
+                local noiseCoal = love.math.noise(tileX * coalNoiseScale, tileY * coalNoiseScale, tonumber(seed))
+                local noiseIron = love.math.noise(tileX * ironNoiseScale, tileY * ironNoiseScale, tonumber(seed + 100))
+                local noiseGold = love.math.noise(tileX * goldNoiseScale, tileY * goldNoiseScale, tonumber(seed + 200))
+                local noiseUranium = love.math.noise(tileX * uraniumNoiseScale, tileY * uraniumNoiseScale, tonumber(seed + 300))
+                local noiseDiamond = love.math.noise(tileX * diamondNoiseScale, tileY * diamondNoiseScale, tonumber(seed + 400))
+                local noiseRuby = love.math.noise(tileX * rubyNoiseScale, tileY * rubyNoiseScale, tonumber(seed + 500))
+                local noiseTanzenite = love.math.noise(tileX * tanzeniteNoiseScale, tileY * tanzeniteNoiseScale, tonumber(seed + 600))
+
+
+                -- Tile type deciding
                 local scale = 0.4
                 if noiseBase > scale then
                     tile = ground
 
-                    if love.math.random() < 0.0002 then
+                    -- COAL
+                    if noiseCoal > coalThreshold then
+                        tile = coal 
+                    end
+
+                    -- IRON
+                    if noiseIron > ironThreshold then
+                        tile = iron 
+                    end
+
+                    -- GOLD
+                    if noiseGold > goldthreshold then
+                        tile = gold 
+                    end
+
+                    -- URANIUM
+                    if noiseUranium > uraniumThreshold then
+                        tile = uranium
+                    end
+
+                    -- DIAMOND
+                    if noiseDiamond > diamondThreshold then
+                        tile = diamond
+                    end
+
+                    -- RUBY
+                    if noiseRuby > rubyThreshold then
                         tile = ruby
                     end
 
-                    if noiseCoal > 0.7 then
-                        tile = coal
+                    -- TANZENITE
+                    if noiseTanzenite > tanzeniteThreshold then
+                        tile = tanzenite
                     end
-                    if noiseIron > 0.76 then
-                        tile = iron
-                    end
-                    if noiseDiamond > 0.8 then
-                        tile = diamond
-                    end
+
+
                 end
 
                 chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}
@@ -109,7 +161,7 @@ if type(chunksToGenerate) == "table" then
             for x=1, #chunk[1] do
                 local tile = chunk[y][x]
                 if tile.type ~= wall then
-                    finalChunk.tiles[#finalChunk.tiles+1] = {x = tile.x, y = tile.y, color = tile.type, biome = tile.biome}
+                    finalChunk.tiles[#finalChunk.tiles+1] = {x = tile.x, y = tile.y, type = tile.type, biome = tile.biome}
                 end
             end
         end

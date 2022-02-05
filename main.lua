@@ -5,6 +5,7 @@ VERSION = 0.1
 lg = love.graphics
 fs = love.filesystem
 kb = love.keyboard
+lm = love.mouse
 lt = love.thread
 random = math.random
 noise = love.math.noise
@@ -34,7 +35,7 @@ function love.load()
         window = {
             width = 1024,
             height = 576,
-            fullscreen = false,
+            fullscreen = true,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
@@ -42,7 +43,7 @@ function love.load()
             lightDistance = 400,
             ambientLight = 0.15,
             lightColor = {1, 0.9, 0.8},
-            tileSize = 32,
+            tileSize = 40,
             assetSize = 16
         },
         debug = {
@@ -65,6 +66,7 @@ function love.load()
 
     lg.setDefaultFilter("nearest", "nearest")
     lg.setLineStyle("rough")
+    lm.setVisible(false)
 
     --Scaling
     scale_x = lg.getWidth() * 0.001
@@ -72,14 +74,14 @@ function love.load()
 
     --Loading fonts
     font = {
-        regular = lg.newFont("src/font/monogram.ttf", 42 * scale_x)
+        regular = lg.newFont("src/font/monogram.ttf", 24 * scale_x)
     }
 
-    load_assets()
+    lg.setFont(font.regular)
 
     -- Loading tileset
-
     tileAtlas, tiles = loadAtlas("src/assets/tileset.png", 16, 16, 0)
+    tileBreakImg, tileBreak = loadAtlas("src/assets/tileBreak.png", 16, 16, 0)
 
     state:load("game")
 
@@ -132,6 +134,10 @@ function love.draw()
 
     lg.setColor(1, 0, 1)
     lg.print(love.timer.getFPS(), 12, 12)
+
+    local mx, my = lm.getPosition()
+    lg.setColor(1, 1, 1, 1)
+    lg.circle("fill", mx, my, 2 * scale_x)
 end
 
 function love.keypressed(key)
