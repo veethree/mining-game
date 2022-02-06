@@ -102,8 +102,8 @@ function worldGen:saveChunkToFile(chunk)
         }
         for i, tile in ipairs(chunk.tiles) do
             output.tiles[i] = {
-                x = tile.x,
-                y = tile.y,
+                x = tile.gridX,
+                y = tile.gridY,
                 biome = tile.biome,
                 type = tile.type,
                 maxHP = tile.maxHP,
@@ -138,7 +138,9 @@ function worldGen:loadChunkFromFile(x, y)
     }
 
     for i,v in ipairs(chunk.tiles) do
-        local tile = self.world:newEntity("src/entity/tile.lua", v.x, v.y, {x = v.x, y = v.y, type = v.type, biome = v.biome}) 
+        local tileX = v.x * self.tileSize
+        local tileY = v.y * self.tileSize
+        local tile = self.world:newEntity("src/entity/tile.lua", tileX, tileY, {x = tileX, y = tileY, type = v.type, biome = v.biome}) 
         tile.chunk = self.chunks[chunk.y][chunk.x]
         self.chunks[chunk.y][chunk.x].tiles[#self.chunks[chunk.y][chunk.x].tiles + 1] = tile
 
@@ -200,6 +202,7 @@ function worldGen:update(dt)
     self.chunkSaveTick = self.chunkSaveTick + dt
     if self.chunkSaveTick > config.settings.chunkSaveInterval then
         save = true 
+        note:new("Saving chunks...")
         self.chunkSaveTick = 0
     end
     for y,col in pairs(self.chunks) do
@@ -237,6 +240,7 @@ function worldGen:draw()
     if config.debug.showChunkBorders then
         camera:push()
 
+        lg.setFont(font.regular)
         for _, col in pairs(self.chunks) do
             for _, chunk in pairs(col) do
                 lg.setColor(1, 1, 0)
@@ -250,9 +254,11 @@ function worldGen:draw()
         end
 
         lg.setColor(0, 1, 1)
+        lg.setFont(font.tiny)
         for _, col in pairs(self.tiles) do
             for _, tile in pairs(col) do
                 lg.rectangle("line", tile.x + 1, tile.y + 1, tile.width, tile.height)
+                lg.print(tile.gridX.."x"..tile.gridY, tile.x, tile.y)
             end
         end
 

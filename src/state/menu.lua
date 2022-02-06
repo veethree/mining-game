@@ -43,26 +43,30 @@ function menu:load()
         fg = {1, 1, 1},
         bg = {0, 0, 0},
         idle = {0.4, 0.4, 0.4},
-        danger = {0.8, 0.2, 0.2}
+        danger = {0.8, 0.2, 0.2},
+        success = {0.4, 0.9, 0.4}
     }
 
     self.currentScreen = "main"
     self.screen = {
         main = {
-            button.new("New world", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.5, self.width * 0.25, self.height * 0.09, newButton),
-            button.new("Load world", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.6, self.width * 0.25, self.height * 0.09, loadButton),
-            button.new("Options", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09, startButton),
-            button.new("Exit", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.8, self.width * 0.25, self.height * 0.09, exitButton),
+            label.new(NAME, self.color.success, font.large, 0, lg.getHeight() * 0.2, "center"),
+            button.new("New world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.5, self.width * 0.4, self.height * 0.09, newButton),
+            button.new("Load world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.6, self.width * 0.4, self.height * 0.09, loadButton),
+            button.new("Options", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.7, self.width * 0.4, self.height * 0.09, startButton),
+            button.new("Exit", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.8, self.width * 0.4, self.height * 0.09, exitButton),
         },
         new = {
-            worldName = textbox.new("", "World name", self.color.fg, self.color.idle, self.color.bg, self.width * 0.05, self.height * 0.5, self.width * 0.25, self.height * 0.09),
-            seed = textbox.new("", "Seed", self.color.fg, self.color.idle, self.color.bg, self.width * 0.05, self.height * 0.6, self.width * 0.25, self.height * 0.09, tonumber),
-            button.new("Create world", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09, createButton),
-            button.new("Back", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.8, self.width * 0.25, self.height * 0.09, backButton),
+            label.new("New world", self.color.success, font.large, 0, lg.getHeight() * 0.2, "center"),
+            worldName = textbox.new("", "World name", self.color.fg, self.color.idle, self.color.bg, self.width * 0.3, self.height * 0.5, self.width * 0.4, self.height * 0.09),
+            seed = textbox.new("", "Seed", self.color.fg, self.color.idle, self.color.bg, self.width * 0.3, self.height * 0.6, self.width * 0.4, self.height * 0.09, tonumber),
+            button.new("Create world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.7, self.width * 0.4, self.height * 0.09, createButton),
+            button.new("Back", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.8, self.width * 0.4, self.height * 0.09, backButton),
         },
         load = {
-            button.new("Delete world", self.color.danger, self.color.bg, self.width * 0.05, self.height * 0.6, self.width * 0.25, self.height * 0.09),
-            button.new("Load world", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09, load),
+            label.new("Load world", self.color.success, font.large, lg.getWidth() * 0.05, lg.getHeight() * 0.2, "left"),
+            button.new("Load world", self.color.success, self.color.bg, self.width * 0.05, self.height * 0.6, self.width * 0.25, self.height * 0.09, load),
+            button.new("Delete world", self.color.danger, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09),
             button.new("Back", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.8, self.width * 0.25, self.height * 0.09, backButton),
         }
     }
@@ -108,7 +112,9 @@ end
 
 function menu:mousepressed(x, y, k)
     for i,v in pairs(self.screen[self.currentScreen]) do
-        v:mousepressed(x, y, k)
+        if type(v.mousepressed) == "function" then
+            v:mousepressed(x, y, k)
+        end
     end
 end
 

@@ -8,6 +8,7 @@ function game:load(data)
         local worldData = fs.load("worlds/"..data.worldName.."/config.lua")()
         self.worldName = worldData.name
         self.seed = worldData.seed
+        note:new("Loaded world '"..self.worldName.."'", "success")
     end
 
 

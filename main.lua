@@ -1,4 +1,4 @@
-NAME = "Untitled"
+NAME = "Cave game"
 VERSION = 0.1
  
 -- GLOBALS
@@ -34,9 +34,9 @@ function love.load()
     --Config
     default_config = {
         window = {
-            width = 1024,
-            height = 576,
-            fullscreen = false,
+            width = 800,--1024,
+            height = 600,--576,
+            fullscreen = true,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
@@ -87,6 +87,7 @@ function love.load()
     font = {
         regular = lg.newFont("src/font/monogram.ttf", 24 * scale_x),
         large = lg.newFont("src/font/monogram.ttf", 64 * scale_x),
+        tiny = lg.newFont("src/font/monogram.ttf", 16 * scale_x),
     }
 
     lg.setFont(font.regular)
@@ -138,11 +139,14 @@ end
 function love.update(dt)
     keybind:trigger("keydown")
     state:update(dt)
+    note:update(dt)
 end
 
 function love.draw()
     lg.setColor(1, 1, 1, 1)
     state:draw()
+
+    note:draw()
 
     lg.setColor(1, 0, 1)
     lg.print(love.timer.getFPS(), 12, 12)
