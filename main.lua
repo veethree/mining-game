@@ -24,11 +24,12 @@ function love.load()
     exString.import()
 
     --Global keypress events love.system.openURL("file://"..love.filesystem.getSaveDirectory())
-    keybind:new("keypressed", {"escape"}, love.event.push, "quit")
-    keybind:new("keypressed", {"escape","lshift"}, love.system.openURL, "file://"..love.filesystem.getSaveDirectory())
+    keybind:new("keypressed", {"escape","lshift"}, love.event.push, "quit")
+    keybind:new("keypressed", {"escape","lctrl"}, love.system.openURL, "file://"..love.filesystem.getSaveDirectory())
 
     -- Defining states
     state:define_state("src/state/game.lua", "game")
+    state:define_state("src/state/menu.lua", "menu")
 
     --Config
     default_config = {
@@ -46,11 +47,15 @@ function love.load()
             tileSize = 40,
             assetSize = 16
         },
+        settings = {
+            chunkSaveInterval = 10
+        },
         debug = {
             enabled = true,
             text_color = {255, 144, 79},
             showChunkBorders = false,
-            saveChunks = false
+            showCollision = false,
+            saveChunks = true
         }
     }
 
@@ -59,6 +64,11 @@ function love.load()
         --config = ttf.load("config.lua")
     else
         --save_config()
+    end
+
+    -- Creating folders
+    if not fs.getInfo("worlds") then
+        fs.createDirectory("worlds")
     end
 
     -- Creating window
@@ -75,7 +85,8 @@ function love.load()
 
     --Loading fonts
     font = {
-        regular = lg.newFont("src/font/monogram.ttf", 24 * scale_x)
+        regular = lg.newFont("src/font/monogram.ttf", 24 * scale_x),
+        large = lg.newFont("src/font/monogram.ttf", 64 * scale_x),
     }
 
     lg.setFont(font.regular)
@@ -84,7 +95,8 @@ function love.load()
     tileAtlas, tiles = loadAtlas("src/assets/tileset.png", 16, 16, 0)
     tileBreakImg, tileBreak = loadAtlas("src/assets/tileBreak.png", 16, 16, 0)
 
-    state:load("game")
+
+    state:load("menu", {worldName = "test"})
 
 
 end
@@ -126,7 +138,6 @@ end
 function love.update(dt)
     keybind:trigger("keydown")
     state:update(dt)
-
 end
 
 function love.draw()
@@ -145,12 +156,18 @@ function love.keypressed(key)
     keybind:keypressed(key)
     keybind:trigger("keypressed", key)
     state:keypressed(key)
-
-
-    if key == "l" then
-        config.graphics.useLight = not config.graphics.useLight
-    elseif key == "b" then
-        config.debug.showChunkBorders = not config.debug.showChunkBorders
+    if key == "escape" then
+        state:load("menu")
+    end
+    -- DEBUG KEYS
+    if state.loadedStateName == "game" then 
+        if key == "l" then
+            config.graphics.useLight = not config.graphics.useLight
+        elseif key == "b" then
+            config.debug.showChunkBorders = not config.debug.showChunkBorders
+        elseif key == "c" then
+            config.debug.showCollision = not config.debug.showCollision
+        end
     end
 end
 

@@ -4,6 +4,7 @@ function require_folder(folder)
     if fs.getInfo(folder) then
         for i,v in ipairs(fs.getDirectoryItems(folder)) do
             if get_file_type(v) == "lua" then
+				print("Loading "..v)
                 _G[get_file_name(v)] = require(folder.."."..get_file_name(v))
             end
         end
@@ -46,7 +47,7 @@ function loadAtlas(path, tileWidth, tileHeight, padding)
 	for i=1, width * height do
 		a[i] = love.graphics.newQuad(x, y, tileWidth, tileHeight, img:getWidth(), img:getHeight())
 		x = x + tileWidth + padding
-		if x > (width * tileWidth) then
+		if x > ((width-1) * tileWidth) then
 			x = padding
 			y = y + tileHeight + padding
 		end

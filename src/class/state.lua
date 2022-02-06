@@ -1,6 +1,7 @@
 -- A bare bones state system
 local state = {
     state = false,
+    loadedStateName = "",
     state_list = {}
 }
 
@@ -13,7 +14,10 @@ end
 -- state: state name as defined with define_state
 -- data: Anything you want to pass to the state in the states load function
 function state:load(state_name, data)
+    self.state = nil
+    collectgarbage("collect")
     if self.state_list[state_name] then
+        self.loadedStateName = state_name
         self.state = fs.load(self.state_list[state_name])()
         if type(self.state.load) == "function" then
             self.state:load(data)
@@ -22,6 +26,10 @@ function state:load(state_name, data)
         error(string.format("STATE: State '%s' does not exist!", state_name))
     end
 end 
+
+function state:unload()
+    self.state = nil
+end
 
 function state:get_state()
     return self.state

@@ -1,4 +1,5 @@
 -- IMPORTANT: This module requires spatial.lua to function. (https://github.com/veethree/spatial)
+-- ALSO IMPORTANT: This module can integrate with bump.lua for collision stuff, Same rules apply as spatial.lua except its optional.
 -- spatial.lua should be in the same folder as ecs.lua.
 
 -- ecs.lua: A minimal entity component system module for löve
@@ -29,6 +30,15 @@ local ecs = {path = ...}
 local ecs_meta = {__index = ecs}
 local directory = ecs.path:gsub("%.", "/"):gsub("ecs", "")
 
+local bumpFound = false -- 
+
+-- Checking for bump.lua and loading it if its found
+local bump
+if fs.getInfo(directory.."/bump.lua") then
+    bump = require(directory.."/bump")
+    bumpFound = true
+end
+
 -- Checking if spatial.lua is present and loading it/throwing error
 local spatial
 if fs.getInfo(directory.."/spatial.lua") then
@@ -37,11 +47,24 @@ else
     error("spatial.lua not found!")
 end
 
+function ecs.unload()
+    ecs_meta = nil
+    ecs_meta = {__index = ecs}
+end
+
 function ecs.new()
-    return setmetatable({
+    local e = {
         system = {},
         entity = spatial.new(config.graphics.tileSize)
-    }, ecs_meta)
+    }
+    if bumpFound then
+        e.bumpWorld = bump.newWorld()
+    end
+    return setmetatable(e, ecs_meta)
+end
+
+function ecs:getBumpWorld()
+    return self.bumpWorld or false
 end
 
 -- Creates a new system
@@ -71,6 +94,9 @@ function ecs:newEntity(path, x, y, data)
 end
 
 function ecs:removeEntity(entity)
+    if self.bumpWorld:hasItem(entity) then
+        self.bumpWorld:remove(entity)
+    end
     self.entity:remove(entity)
 end
 
@@ -93,6 +119,7 @@ function ecs:update(entity_list, dt)
             end
         end
     end
+
 
     -- Removing _REMOVE entities
     for i,v in ipairs(self:query()) do

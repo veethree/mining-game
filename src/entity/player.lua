@@ -1,6 +1,7 @@
 local entity = {}
 
-function entity:load(data)
+function entity:load(data, ecs)
+    self.bumpWorld = ecs.bumpWorld
     self.entityType = "player"
     self.visible = false
     self.x = data.x--floor(data.x / self.width) * self.width
@@ -12,7 +13,9 @@ function entity:load(data)
     self.oChunkX = 0
     self.oChunkY = 0
     self.chunkSize = data.chunkSize
-    self.tileSize = config.graphics.tileSize * scale_x
+    self.tileSize = math.floor(config.graphics.tileSize * scale_x)
+    self.collisonBoxWidth = math.floor(config.graphics.tileSize * scale_x * 0.8)
+    self.collisionBoxHeight = math.floor(config.graphics.tileSize * scale_x * 0.6)
     self.speed = 100 * scale_x
     self.control = false
 
@@ -31,6 +34,14 @@ function entity:load(data)
 
     self.inventory = {}
 
+    self.bumpWorld:add(self, self.x, self.y, self.collisonBoxWidth, self.collisionBoxHeight)
+
+end
+
+function entity:teleport(x, y)
+    self.x = x
+    self.y = y
+    self.bumpWorld:update(self, self.x, self.y)
 end
 
 function entity:draw()
@@ -43,12 +54,11 @@ function entity:draw()
         else
             self.animation[self.direction]:stop()
         end
-        self.animation[self.direction]:draw(self.x, self.y, self.tileSize / config.graphics.assetSize, self.tileSize / config.graphics.assetSize)
+        local x = self.x - (self.tileSize - self.collisonBoxWidth) / 2
+        local y = self.y - (self.tileSize - self.collisionBoxHeight)
+        self.animation[self.direction]:draw(x, y, self.tileSize / config.graphics.assetSize, self.tileSize / config.graphics.assetSize)
 
     end
-
-    --lg.rectangle("line", self.chunkX * self.tileSize * self.chunkSize, self.chunkY * self.tileSize * self.chunkSize, self.chunkSize * self.tileSize, self.chunkSize * self.tileSize)
-    --lg.print(self.chunkX.."x"..self.chunkY, self.chunkX * self.tileSize * self.chunkSize, self.chunkY * self.tileSize * self.chunkSize)
 end
 
 return entity

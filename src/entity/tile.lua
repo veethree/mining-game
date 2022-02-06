@@ -1,8 +1,14 @@
 local entity = {}
 
+-- Data relating to different tile types
 local tileData = {
     {
-        type = "Stone",
+        type = "Wall",
+        maxHP = 2,
+        drop = {0, 0}
+    },
+    {
+        type = "Floor",
         maxHP = false
     },
     {
@@ -42,7 +48,15 @@ local tileData = {
     },
 }
 
-function entity:load(data)
+local biomes = {
+    {1, 0.9, 0.9},
+    {0.1, 0.6, 0.3},
+    {1, 0.3, 0.9},
+    {1, 0.2, 0.2},
+}
+
+function entity:load(data, ecs)
+    self.bumpWorld = ecs.bumpWorld
     self.entityType = "tile"
     self.visible = true
     self.width = worldGen.tileSize
@@ -60,9 +74,16 @@ function entity:load(data)
     -- Tile type data
     self.maxHP = false
     if tonumber(self.type) then
-        self.maxHP = tileData[self.type].maxHP
-        self.hp = self.maxHP
-        self.mined = false
+        if self.type > 0 then
+            self.maxHP = tileData[self.type].maxHP
+            self.hp = self.maxHP
+            self.mined = false
+        end
+    end
+
+    -- Collider tile
+    if self.type == 1 then
+        self.bumpWorld:add(self, self.x, self.y, self.width, self.height) 
     end
 end
 
@@ -70,13 +91,16 @@ function entity:mine()
     if self.hp then
         self.hp = self.hp - 1
         if self.hp < 1 then
-            if not _PLAYER.inventory[tileData[self.type].type] then
-                _PLAYER.inventory[tileData[self.type].type] = 0
+            if self.type > 2 then
+                if not _PLAYER.inventory[tileData[self.type].type] then
+                    _PLAYER.inventory[tileData[self.type].type] = 0
+                end
+                _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + random(tileData[self.type].drop[1], tileData[self.type].drop[2])
+            else
+                self.bumpWorld:remove(self)
             end
-
-            _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + random(tileData[self.type].drop[1], tileData[self.type].drop[2])
             self.hp = false
-            self.type = 1
+            self.type = 2
 
             self.chunk.modified = true
         end
@@ -84,21 +108,20 @@ function entity:mine()
 end
 
 function entity:draw()
-    --lg.setColor(self.color)
-    --lg.rectangle("fill", self.x, self.y, self.width, self.height)
-
     if _PLAYER and _PLAYER.control then
-
-        -- Checking if tile is visible to player via bresenham.lua hopefully we will see if this even works lol say hi to your mom for me
+        -- Checking if tile is visible to player 
         local los =  bresenham.los(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY, function(x, y)
             if worldGen.tiles[y] then
                 if worldGen.tiles[y][x] then
-                    return true
+                    if worldGen.tiles[y][x].type > 1 then
+                        return true
+                    end
                end
             end
             end)
 
 
+        -- Calculating lighting
         local shade = 1
         if config.graphics.useLight then
             local distanceFromPlayer = fmath.distance(self.x, self.y, _PLAYER.x, _PLAYER.y)
@@ -118,22 +141,18 @@ function entity:draw()
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
         else
             lg.setColor(1, 1, 1, shade)
-            if self.biome == 2 then
-                lg.setColor(0.8, 0.5, 1, shade)
-            end
-            lg.draw(tileAtlas, tiles[self.type + 18], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+            lg.draw(tileAtlas, tiles[self.type + 16], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             lg.setBlendMode("multiply", "premultiplied")
             lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
             lg.setBlendMode("alpha")
-
         end
 
         -- Selection
         self.hover = false
         local mx, my = camera:getMouse()
         if mx > self.x and mx < self.x + self.width and my > self.y and my < self.y + self.height then
-            if fmath.distance(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY) < _PLAYER.reach and los then
+            if fmath.distance(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY) < _PLAYER.reach then
                 self.hover = true
             end
         end

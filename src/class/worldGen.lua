@@ -7,15 +7,27 @@ function worldGen:load(data)
     self.renderDistance = 3 -- How many chunks in each direction to generate at a time
     self.maxChunkDistance = self.renderDistance * 2 -- How far, In chunk coordinates before a chunk is unloaded
 
+    self.chunkSaveTick = 0
 
     self.player = data.player
     self.world = data.world
+    self.worldName = data.worldName
+    self.seed = data.seed
 
     self.chunks = {} -- Loaded chunks
     self.tiles = {} -- Loaded tiles, Used for LOS 
     self.loadedChunkCount = 0
 
     self.thread = lt.newThread("src/class/generateChunk.lua") -- Thread used for generating chunks
+    -- File management
+    -- Creating save directory for world
+    fs.createDirectory("worlds/"..self.worldName)
+
+    self.worldConfig = {
+        name = self.worldName,
+        seed = self.seed
+    }
+    ttf.save(self.worldConfig, "worlds/"..self.worldName.."/config.lua")
 end
 
 function worldGen:iterateChunks(func)
@@ -31,14 +43,13 @@ function worldGen:findPlayerSpawnTile()
         self:iterateChunks(function(chunk)
             local spawnX, spawnY = 0, 0
             for _, tile in ipairs(chunk.tiles) do
-                if tile.type == 1 then
-                    spawnX = tile.x - self.tileSize
-                    spawnY = tile.y - self.tileSize
+                if tile.type == 2 then
+                    spawnX = tile.x
+                    spawnY = tile.y
                     break
                 end
             end
-            self.player.x = spawnX
-            self.playerY = spawnY
+            self.player:teleport(spawnX, spawnY)
             self.player.control = true      
         end)
     end
@@ -73,16 +84,16 @@ function worldGen:updateChunks(chunkX, chunkY)
         end
     end
 
-    self.thread:start(chunksToGenerate, self.chunkSize, self.tileSize, seed)
+    self.thread:start(chunksToGenerate, self.chunkSize, self.tileSize, self.seed)
 end
 
 -- Stores a chunk in a file
 function worldGen:saveChunkToFile(chunk)
     if config.debug.saveChunks then
-        if not fs.getInfo("chunks") then
-            fs.createDirectory("chunks") 
+        if not fs.getInfo("worlds/"..self.worldName.."/chunks") then
+            fs.createDirectory("worlds/"..self.worldName.."/chunks") 
         end
-        local outputName = "chunks/("..chunk.x..")("..chunk.y..").lua"
+        local outputName = "worlds/"..self.worldName.."/chunks/("..chunk.x..")("..chunk.y..").lua"
         local output = {
             x = chunk.x,
             y = chunk.y,
@@ -106,7 +117,7 @@ function worldGen:saveChunkToFile(chunk)
 end
 
 function worldGen:loadChunkFromFile(x, y)
-    local fileName = "chunks/("..x..")("..y..").lua"
+    local fileName = "worlds/"..self.worldName.."/chunks/("..x..")("..y..").lua"
     if not fs.getInfo(fileName) then
         return false
     end    
@@ -140,7 +151,7 @@ function worldGen:loadChunkFromFile(x, y)
 end
 
 function worldGen:chunkFileExists(x, y)
-    return fs.getInfo("chunks/("..x..")("..y..").lua") and true or false
+    return fs.getInfo("worlds/"..self.worldName.."/chunks/("..x..")("..y..").lua") and true or false
 end
 
 function worldGen:update(dt)
@@ -185,13 +196,19 @@ function worldGen:update(dt)
 
     -- Unloading chunkers
     local chunksToUnload = 0
+    local save = false
+    self.chunkSaveTick = self.chunkSaveTick + dt
+    if self.chunkSaveTick > config.settings.chunkSaveInterval then
+        save = true 
+        self.chunkSaveTick = 0
+    end
     for y,col in pairs(self.chunks) do
         for x, chunk in pairs(col) do
+            -- Saving chunk if modified
+            if chunk.modified and save then
+                self:saveChunkToFile(chunk)
+            end
             if fmath.distance(self.player.chunkX, self.player.chunkY, x, y) > self.maxChunkDistance then
-                -- Saving chunk if modified
-                if chunk.modified then
-                    self:saveChunkToFile(chunk)
-                end
 
                 for i,v in ipairs(chunk.tiles) do
                     self.tiles[v.gridY][v.gridX] = nil
