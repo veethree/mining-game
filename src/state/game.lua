@@ -1,16 +1,24 @@
 local game = {}
 
 function game:load(data)
+    local playerX, playerY = 0, 0 -- Grid coordinates!
+    local playerLoaded = false -- True if player loaded from save file
+    local playerInventory = {}
     if data.type == "new" then
         self.worldName = data.worldName
         self.seed = data.seed
+        note:new("Created world '"..self.worldName.."'", "success")
     elseif data.type == "load" then
         local worldData = fs.load("worlds/"..data.worldName.."/config.lua")()
         self.worldName = worldData.name
         self.seed = worldData.seed
+        playerX = worldData.player.x 
+        playerY = worldData.player.y 
+        playerLoaded = true
+
+        playerInventory = worldData.player.inventory
         note:new("Loaded world '"..self.worldName.."'", "success")
     end
-
 
     self.world = ecs.new()
     self.world:loadSystemFromFolder("src/system")
@@ -18,10 +26,8 @@ function game:load(data)
     if config.debug.enabled then
         _WORLD = self.world
     end
-    
 
-    local px, py = lg.getWidth() / 2, lg.getHeight() / 2
-    self.player = self.world:newEntity("src/entity/player.lua", px, py, {x = px, y = py})
+    self.player = self.world:newEntity("src/entity/player.lua", playerX, playerY, {x = playerX, y = playerY, inventory = playerInventory, playerLoaded = playerLoaded})
 
     _PLAYER = self.player
 
@@ -47,7 +53,7 @@ end
 
 function game:update(dt)
     smoof:update(dt)
-    camera:set(self.player.x - (lg.getWidth() / 2), self.player.y - (lg.getHeight() / 2))    
+    camera:lookAtEntity(self.player)
     camera:update(dt)
     worldGen:update(dt)
 end
@@ -56,7 +62,6 @@ function game:draw()
     local entity_list, len = self.world:queryRect(camera.x - self.renderBuffer, camera.y - self.renderBuffer, lg.getWidth() + self.renderBuffer * 2, lg.getHeight() + self.renderBuffer * 2)
     camera:push()
     self.world:update(entity_list)
-
 
     self.player:draw()
     camera:pop()
@@ -77,7 +82,10 @@ function game:draw()
     lg.setColor(1, 0.5, 0)
     local all, all_len = self.world:query()
     local bumpItems = self.world:getBumpWorld():countItems()
-    lg.print("entities: "..len.."/"..all_len.."\nX: "..floor(self.player.x).." Y: "..floor(self.player.y).."\nBump items: "..bumpItems.."\nPlayer control: "..tostring(self.player.control), 12, 80)
+    lg.print("entities: "..len.."/"..all_len..
+    "\nX: "..floor(self.player.x).." ("..self.player.gridX..") Y: "..floor(self.player.y).." ("..self.player.gridY..")"..
+    "\nChunkX: "..self.player.chunkX.." ChunkY: "..self.player.chunkY..
+    "\nBump items: "..bumpItems.."\nSeed: "..tostring(self.seed), 12, 80)
     worldGen:draw()
 
 
@@ -95,16 +103,18 @@ function game:draw()
         camera:pop()
     end
 
-    lg.setColor(1, 0, 0, 1)
+    self:drawMinimap(all)
+
 end
 
-function game:drawMinimap()
+function game:drawMinimap(all)
     -- Minimap
     local minimapScale = 4
     local minimapX = lg.getWidth() * 0.8
     local minimapY = lg.getHeight() * 0.8
 
     local miniMapColors = {
+        {0, 0, 0, 1},
         {1, 1, 1, 1},
         {0.5, 0.5, 0.5},
         {0.8, 0.7, 0.5},
@@ -150,6 +160,12 @@ function game:mousepressed(x, y, k)
                 v:mine()
             end
         end
+    end
+end
+
+function game:keypressed(key)
+    if key == "f5" then
+        worldGen:saveWorld()
     end
 end
 

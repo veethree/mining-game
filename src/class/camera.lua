@@ -44,6 +44,18 @@ function camera:move(x, y, dt)
     self.y = self.y + y * dt
 end
 
+function camera:lookAtEntity(ent, force)
+    force = force or false
+    local x = ent.x - (lg.getWidth() /  2) + (ent.width / 2)
+    local y = ent.y - (lg.getHeight() /  2) + (ent.height / 2)
+    self.tx = x
+    self.ty = y
+    if force then
+        self.x = x
+        self.y = y
+    end
+end
+
 function camera:set(x, y)
     self.tx = x
     self.ty = y

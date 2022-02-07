@@ -18,7 +18,15 @@ local function exitButton()
 end
 
 local function createButton()
-    state:load("game", {type = "new", worldName = menu.screen.new.worldName.text, seed = menu.screen.new.seed.text})
+    if #menu.screen.new.worldName.text < 1 then
+        note:new("Please enter a world name!", "danger") 
+    else
+        local seed = menu.screen.new.seed.text
+        if #seed < 1 then
+            seed = os.time()
+        end
+        state:load("game", {type = "new", worldName = menu.screen.new.worldName.text, seed = tonumber(seed)})
+    end
 end
 
 local function load()
@@ -34,6 +42,43 @@ local function load()
     if selected then
         state:load("game", {type = "load", worldName = selected.text})
     end
+end
+
+local function removeDirectory(dir)
+    if fs.getInfo(dir).type == "directory" then
+        for _, sub in pairs( fs.getDirectoryItems(dir)) do
+            removeDirectory(dir.."/"..sub)
+            fs.remove(dir.."/"..sub)
+        end
+    else
+        fs.remove(dir)
+    end
+    fs.remove(dir)
+end
+
+local function delete()
+    local selected = false
+    local selectedIndex = false
+    for i,v in ipairs(menu.screen.load) do
+        if v.type == "textbox" then
+            if v.selected then
+                selected = v
+                selectedIndex = i
+                break
+            end   
+        end
+    end
+    if selected then
+        if not menu.deleteConfirmed then
+            note:new("Warning: This will delete the world PERMANENTLY. This is your only warning", "danger", 8)
+            menu.deleteConfirmed = true
+        else
+            removeDirectory("worlds/"..selected.text)
+            menu.screen.load[selectedIndex] = nil
+            note:new("World '"..selected.text.."' deleted.", "success")
+        end
+    end
+
 end
 
 function menu:load()
@@ -66,7 +111,7 @@ function menu:load()
         load = {
             label.new("Load world", self.color.success, font.large, lg.getWidth() * 0.05, lg.getHeight() * 0.2, "left"),
             button.new("Load world", self.color.success, self.color.bg, self.width * 0.05, self.height * 0.6, self.width * 0.25, self.height * 0.09, load),
-            button.new("Delete world", self.color.danger, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09),
+            button.new("Delete world", self.color.danger, self.color.bg, self.width * 0.05, self.height * 0.7, self.width * 0.25, self.height * 0.09, delete),
             button.new("Back", self.color.fg, self.color.bg, self.width * 0.05, self.height * 0.8, self.width * 0.25, self.height * 0.09, backButton),
         }
     }
@@ -79,6 +124,7 @@ function menu:load()
         end
     end
 
+    self.deleteConfirmed = false
 
 
 

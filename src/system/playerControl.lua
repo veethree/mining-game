@@ -10,7 +10,8 @@ return {
         if space then speed = e.speed * 5 end
 
         e.moving = false
-        local nx, ny = e.x, e.y
+        local xOffset = (e.collisonBoxWidth / 2)
+        local nx, ny = e.x - xOffset, e.y 
         if right then
             nx = nx + speed * dt
             e.moving = true
@@ -34,15 +35,17 @@ return {
         -- Collisions
         local fx, fy, col, len = e.bumpWorld:move(e, nx, ny)
 
+        if not config.debug.playerCollision then
+            fx, fy = nx, ny
+        end
+
         if len > 0 then
             e.moving = false
         end
-        e.x = fx
-        e.y = fy
+        e.x = fx + xOffset
+        e.y = fy 
 
-        -- Updating gridd coordinates
-        e.gridX = math.floor(e.x / floor(config.graphics.tileSize * scale_x))
-        e.gridY = math.floor(e.y / floor(config.graphics.tileSize * scale_x))
+        e:updateGridCoordinates()
 
         e._SPATIAL.spatial:update_item_cell(e.x, e.y, e)
     end

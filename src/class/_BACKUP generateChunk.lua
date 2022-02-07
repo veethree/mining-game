@@ -16,7 +16,7 @@ for _, file in ipairs(fs.getDirectoryItems("src/biome")) do
 end
 
 
-function fractalNoise(x, y, seed, scale, iterations, ampScale, freqScale)
+function fractalNoise(x, y, iterations, ampScale, freqScale)
     -- Normal function
     local function normal(value, min, max)
         return (value - min) / (max - min)
@@ -27,11 +27,11 @@ function fractalNoise(x, y, seed, scale, iterations, ampScale, freqScale)
     local totalAmp = 0
     local maxValue = 0
     local amp = 1
-    local frequency = scale
+    local frequency = 0.01
     local value = 0
 
     for i=1, iterations do
-        value = value + noise(x * frequency, y * frequency, seed ) * amp
+        value = value + noise(x * frequency, y * frequency) * amp
         if value > maxValue then
             maxValue = value
         end
@@ -99,11 +99,7 @@ if type(chunksToGenerate) == "table" then
 
                 -- Tile type deciding
                 local tileBiome = biomes[biome]
-                    
-                -- x, y, scale, iterations, ampScale, freqScale
-                local sway = -1 + (noise(tileY * 0.01, tileX * 0.01, seed) * 2)
-                local swayAmount = 0.05
-                if generateNoise(tileX, tileY, tileBiome.caveScaleBase, tileBiome.caveScaleDetail, tileBiome.caveThresh + (swayAmount * sway), tileBiome.caveRatio1, tileBiome.caveRatio2, 0) then
+                if generateNoise(tileX, tileY, tileBiome.caveScaleBase, tileBiome.caveScaleDetail, tileBiome.caveThresh, tileBiome.caveRatio1, tileBiome.caveRatio2, 0) then
                     tile = ground
 
                     for i, ore in ipairs(tileBiome.ores) do
@@ -114,10 +110,6 @@ if type(chunksToGenerate) == "table" then
                             end
                         end
                     end
-                else
-                    --if fractalNoise(tileX, tileY, seed - 100, noiseScale * 0.4, 5, 0.2, 4) > 0.7 then
-                        --tile = math.floor(noise(tileX * noiseScale, tileY * noiseScale, seed) * 4) + 6
-                    --end
                 end
 
                 chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}

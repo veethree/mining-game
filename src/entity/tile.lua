@@ -91,6 +91,7 @@ function entity:mine()
     if self.hp then
         self.hp = self.hp - 1
         if self.hp < 1 then
+            local wall = false
             if self.type > 2 then
                 if not _PLAYER.inventory[tileData[self.type].type] then
                     _PLAYER.inventory[tileData[self.type].type] = 0
@@ -98,9 +99,18 @@ function entity:mine()
                 _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + random(tileData[self.type].drop[1], tileData[self.type].drop[2])
             else
                 self.bumpWorld:remove(self)
+                wall = true
             end
             self.hp = false
             self.type = 2
+            if wall then
+                if random() < 0.1 then
+                    self.type = random(6, 9)
+                    self.maxHP = tileData[self.type].maxHP
+                    self.hp = self.maxHP
+                    self.mined = false
+                end
+            end
 
             self.chunk.modified = true
         end

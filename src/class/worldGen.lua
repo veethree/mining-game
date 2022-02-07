@@ -2,7 +2,7 @@ local worldGen = {}
 
 function worldGen:load(data)
     -- World gen settings
-    self.chunkSize = 6
+    self.chunkSize = config.settings.chunkSize
     self.tileSize = floor(config.graphics.tileSize * scale_x)
     self.renderDistance = 3 -- How many chunks in each direction to generate at a time
     self.maxChunkDistance = self.renderDistance * 2 -- How far, In chunk coordinates before a chunk is unloaded
@@ -21,13 +21,23 @@ function worldGen:load(data)
     self.thread = lt.newThread("src/class/generateChunk.lua") -- Thread used for generating chunks
     -- File management
     -- Creating save directory for world
-    fs.createDirectory("worlds/"..self.worldName)
+    self.savePath = "/worlds/"..self.worldName
+    fs.createDirectory(self.savePath)
+    worldGen:saveWorld()
+    worldGen:updateChunks(self.player.chunkX, self.player.chunkY)
+end
 
+function worldGen:saveWorld()
     self.worldConfig = {
         name = self.worldName,
-        seed = self.seed
+        seed = self.seed,
+        player = {
+            x = self.player.gridX,
+            y = self.player.gridY,
+            inventory = self.player.inventory
+        }
     }
-    ttf.save(self.worldConfig, "worlds/"..self.worldName.."/config.lua")
+    ttf.save(self.worldConfig, self.savePath.."/".."config.lua")
 end
 
 function worldGen:iterateChunks(func)
@@ -38,20 +48,43 @@ function worldGen:iterateChunks(func)
     end
 end
 
+function worldGen:centerPlayerOnTile(x, y)
+    x = x or self.player.gridX
+    y = y or self.player.gridY
+    self.player.x = x * self.tileSize + (self.tileSize / 2)
+    self.player.y = y * self.tileSize + (self.tileSize / 2) - (self.player.collisionBoxHeight / 2)
+end
+
 function worldGen:findPlayerSpawnTile()
     if not self.player.control then
-        self:iterateChunks(function(chunk)
-            local spawnX, spawnY = 0, 0
-            for _, tile in ipairs(chunk.tiles) do
-                if tile.type == 2 then
-                    spawnX = tile.x
-                    spawnY = tile.y
-                    break
+        local spawnX, spawnY = 0, 0
+        local foundSpawnTile = false
+        if self.player.playerLoaded then
+            spawnX = self.player.x
+            spawnY = self.player.y
+            foundSpawnTile = true
+        else
+            self:iterateChunks(function(chunk)
+                for _, tile in ipairs(chunk.tiles) do
+                    if tile.type == 2 then
+                        spawnX = tile.y
+                        spawnY = tile.x
+                        foundSpawnTile = true
+                        break
+                    end
                 end
-            end
+            end)
+        end
+
+        if foundSpawnTile then
+            self.player.control = true
             self.player:teleport(spawnX, spawnY)
-            self.player.control = true      
-        end)
+            self:centerPlayerOnTile()
+            note:new("Player spawned", "success")
+            print("Spawned player")
+        else
+            print("Failed to spawn player")
+        end
     end
 end
 
@@ -158,13 +191,9 @@ end
 
 function worldGen:update(dt)
     -- Checking if player has entered a new chunk
-    self.player.chunkX = floor(self.player.x / (self.chunkSize * self.tileSize))
-    self.player.chunkY = floor(self.player.y / (self.chunkSize * self.tileSize))
-
+    self.player:updateChunkCoordinates()
     if self.player.chunkX ~= self.player.oChunkX or self.player.chunkY ~= self.player.oChunkY then
         self:updateChunks(self.player.chunkX, self.player.chunkY)
-        self.player.oChunkX = self.player.chunkX 
-        self.player.oChunkY = self.player.chunkY
     end
 
     -- Thread shit
@@ -202,7 +231,7 @@ function worldGen:update(dt)
     self.chunkSaveTick = self.chunkSaveTick + dt
     if self.chunkSaveTick > config.settings.chunkSaveInterval then
         save = true 
-        note:new("Saving chunks...")
+        self:saveWorld()
         self.chunkSaveTick = 0
     end
     for y,col in pairs(self.chunks) do
@@ -231,7 +260,6 @@ function worldGen:update(dt)
 
     -- Spawning player
     self:findPlayerSpawnTile()
-
 end
 
 function worldGen:draw()
@@ -253,12 +281,15 @@ function worldGen:draw()
             end
         end
 
-        lg.setColor(0, 1, 1)
-        lg.setFont(font.tiny)
-        for _, col in pairs(self.tiles) do
-            for _, tile in pairs(col) do
-                lg.rectangle("line", tile.x + 1, tile.y + 1, tile.width, tile.height)
-                lg.print(tile.gridX.."x"..tile.gridY, tile.x, tile.y)
+        local showTiles = true
+        if showTiles then
+            lg.setColor(0, 1, 1)
+            lg.setFont(font.tiny)
+            for _, col in pairs(self.tiles) do
+                for _, tile in pairs(col) do
+                    lg.rectangle("line", tile.x + 1, tile.y + 1, tile.width, tile.height)
+                    lg.print(tile.gridX.."x"..tile.gridY, tile.x, tile.y)
+                end
             end
         end
 

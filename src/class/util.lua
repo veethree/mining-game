@@ -1,10 +1,28 @@
 -- Various utility functions
 
+function weightedRandom(weights)
+	local weightSum = 0
+	for i,v in ipairs(weights) do
+		weightSum = weightSum + v
+	end
+
+	local rnd = weightSum * math.random()
+	local sel = 0
+	for i,v in ipairs(weights) do
+		if v < rnd then
+			sel = i
+			break
+		end
+		rnd = rnd - v
+	end	
+	return sel
+end
+
+
 function require_folder(folder)
     if fs.getInfo(folder) then
         for i,v in ipairs(fs.getDirectoryItems(folder)) do
             if get_file_type(v) == "lua" then
-				print("Loading "..v)
                 _G[get_file_name(v)] = require(folder.."."..get_file_name(v))
             end
         end
@@ -28,7 +46,7 @@ function get_file_name(file_name)
 end
 
 -- Converts colors from 0-255 to 0-1
-function color(r, g, b, a)
+function convertColor(r, g, b, a)
     a = a or 255
     return r / 255,  g / 255,  b / 255,  a / 255
 end

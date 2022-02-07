@@ -16,7 +16,6 @@ floor = math.floor
 
 
 function love.load()
-    seed = os.time() + love.mouse.getX() * love.mouse.getY()
     -- Loaidng classes
     require("src.class.util")
     require_folder("src/class")
@@ -34,28 +33,30 @@ function love.load()
     --Config
     default_config = {
         window = {
-            width = 800,--1024,
-            height = 600,--576,
-            fullscreen = true,
+            width = 1024,
+            height = 576,
+            fullscreen = false,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
             useLight = true,
             lightDistance = 400,
-            ambientLight = 0.15,
+            ambientLight = 0.1,
             lightColor = {1, 0.9, 0.8},
             tileSize = 40,
             assetSize = 16
         },
         settings = {
-            chunkSaveInterval = 10
+            chunkSaveInterval = 10,
+            chunkSize = 6
         },
         debug = {
             enabled = true,
             text_color = {255, 144, 79},
             showChunkBorders = false,
             showCollision = false,
-            saveChunks = true
+            saveChunks = true,
+            playerCollision = true
         }
     }
 
@@ -97,34 +98,17 @@ function love.load()
     tileBreakImg, tileBreak = loadAtlas("src/assets/tileBreak.png", 16, 16, 0)
 
 
-    state:load("menu", {worldName = "test"})
+    --state:load("menu", {worldName = "test"})
+    state:load("game", {type = "load", worldName = "test"})
+
+    console:init(0, 0, lg.getWidth(), lg.getHeight(), false, font.regular)
+    console:setVisible(false)
 
 
-end
-
-function load_assets()
-    -- Auto loads assets
-    -- The assets are stored in the global 'assets' table, Sorted by file type
-    -- ex: assets.mp3.mainMusic / assets.png/texture
-    -- Filenames that start with a _ are ignored
-    -- ex: "_song.mp3"
-    local img = {"png", "jpg"}
-    local assets_folder = "src/assets"
-    assets = {}
-    local files = fs.getDirectoryItems(assets_folder)
-    for _,file in ipairs(files) do
-        local name, ext = get_file_name(file), get_file_type(file)
-        if not name:startsWith("_") then
-            if not assets[ext] then assets[ext] = {} end
-            local ass
-            -- IMAGE
-            if hasValue(img, ext) then
-                ass = lg.newImage(f("%s/%s", assets_folder, file))
-            end
-
-            assets[ext][name] = ass
-        end
+    for i=1, 30 do
+        print(weightedRandom({100, 20, 20, 20}))
     end
+
 end
 
 function save_config()
@@ -140,6 +124,7 @@ function love.update(dt)
     keybind:trigger("keydown")
     state:update(dt)
     note:update(dt)
+    console:update(dt)
 end
 
 function love.draw()
@@ -151,6 +136,8 @@ function love.draw()
     lg.setColor(1, 0, 1)
     lg.print(love.timer.getFPS(), 12, 12)
 
+    console:draw()
+
     local mx, my = lm.getPosition()
     lg.setColor(1, 1, 1, 1)
     lg.circle("fill", mx, my, 2 * scale_x)
@@ -160,11 +147,20 @@ function love.keypressed(key)
     keybind:keypressed(key)
     keybind:trigger("keypressed", key)
     state:keypressed(key)
+    console:keypressed(key)
     if key == "escape" then
-        state:load("menu")
+        if console:getVisible() then
+            console:setVisible(false) 
+        else
+            state:load("menu")
+        end
+    end
+
+    if key == "f1" then
+        console:setVisible(true)
     end
     -- DEBUG KEYS
-    if state.loadedStateName == "game" then 
+    if state.loadedStateName == "game" and not console:getVisible() then
         if key == "l" then
             config.graphics.useLight = not config.graphics.useLight
         elseif key == "b" then
@@ -177,6 +173,7 @@ end
 
 function love.textinput(t)
     state:textinput(t)
+    console:textinput(t)
 end
 
 function love.keyreleased(key)
