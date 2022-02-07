@@ -41,7 +41,7 @@ function love.load()
         graphics = {
             useLight = true,
             lightDistance = 400,
-            ambientLight = 0.1,
+            ambientLight = 0.2,
             lightColor = {1, 0.9, 0.8},
             tileSize = 40,
             assetSize = 16
@@ -98,16 +98,12 @@ function love.load()
     tileBreakImg, tileBreak = loadAtlas("src/assets/tileBreak.png", 16, 16, 0)
 
 
-    --state:load("menu", {worldName = "test"})
-    state:load("game", {type = "load", worldName = "test"})
+    state:load("menu", {worldName = "test"})
+    --state:load("game", {type = "load", worldName = "test"})
 
     console:init(0, 0, lg.getWidth(), lg.getHeight(), false, font.regular)
     console:setVisible(false)
 
-
-    for i=1, 30 do
-        print(weightedRandom({100, 20, 20, 20}))
-    end
 
 end
 

@@ -4,7 +4,7 @@ function worldGen:load(data)
     -- World gen settings
     self.chunkSize = config.settings.chunkSize
     self.tileSize = floor(config.graphics.tileSize * scale_x)
-    self.renderDistance = 3 -- How many chunks in each direction to generate at a time
+    self.renderDistance = 4 -- How many chunks in each direction to generate at a time
     self.maxChunkDistance = self.renderDistance * 2 -- How far, In chunk coordinates before a chunk is unloaded
 
     self.chunkSaveTick = 0
@@ -25,6 +25,11 @@ function worldGen:load(data)
     fs.createDirectory(self.savePath)
     worldGen:saveWorld()
     worldGen:updateChunks(self.player.chunkX, self.player.chunkY)
+
+
+    self.worldTick = 0
+    self.worldTickRate = 0.4 -- Ticks per second
+    print("WorldGen loaded")
 end
 
 function worldGen:saveWorld()
@@ -44,6 +49,15 @@ function worldGen:iterateChunks(func)
     for _, col in pairs(self.chunks) do
         for _, chunk in pairs(col) do
             func(chunk)
+        end
+    end
+end
+
+
+function worldGen:iterateTiles(func)
+    for y, row in pairs(self.tiles) do
+        for x, tile in pairs(row) do
+            func(tile) 
         end
     end
 end
@@ -260,10 +274,53 @@ function worldGen:update(dt)
 
     -- Spawning player
     self:findPlayerSpawnTile()
+
+    -- World tick
+    self.worldTick = self.worldTick + dt
+    if self.worldTick > (1 / self.worldTickRate) then
+        self:updateWorld()
+        self.worldTick = 0
+    end
+end
+
+function worldGen:updateWorld()
+    self:iterateTiles(function(tile)
+        -- Gathering adjescent tiles
+        local adjescent = {}
+        local adjescentCount = 0
+        local adjescentCoords = {
+            {x = tile.gridX + 1, y = tile.gridY},
+            {x = tile.gridX - 1, y = tile.gridY},
+            {x = tile.gridX, y = tile.gridY + 1},
+            {x = tile.gridX, y = tile.gridY - 1},
+        }
+
+        for i,v in ipairs(adjescentCoords) do
+            if self.tiles[v.y] then
+                if self.tiles[v.y][v.x] then
+                    adjescent[#adjescent+1] = self.tiles[v.y][v.x]
+                    adjescentCount = adjescentCount + 1
+                end
+            end
+        end
+
+        -- Fuckin round'
+        if tile.type == 100 then
+            for i,v in ipairs(adjescent) do
+                if v.type == 2 then
+                    v.type = 10
+                    v.color = {0, 0, 1}
+                end
+            end
+        end
+
+
+    end)
 end
 
 function worldGen:draw()
-    lg.print("Loaded Chunks: "..self.loadedChunkCount, 12, 48)
+    lg.print("Loaded Chunks: "..self.loadedChunkCount..
+    "\nWorldTick: "..self.worldTick, 12, 48)
 
     if config.debug.showChunkBorders then
         camera:push()

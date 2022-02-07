@@ -8,7 +8,7 @@ local camera = {
     tx = 0,
     ty = 0,
     scale = 1,
-    smoof = 5,
+    smoof = 10,
     layers = {}
 }
 

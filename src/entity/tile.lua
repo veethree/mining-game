@@ -46,6 +46,11 @@ local tileData = {
         maxHP = 30,
         drop = {1, 1}
     },
+    {
+        type = "Water",
+        maxHP = 9999,
+        drop = {1, 1}
+    }
 }
 
 local biomes = {
@@ -70,6 +75,8 @@ function entity:load(data, ecs)
     self.texture = data.texture or false
     self.type = data.type
     self.biome = data.biome
+
+    self.color = {1, 1, 1}
 
     -- Tile type data
     self.maxHP = false
@@ -104,8 +111,9 @@ function entity:mine()
             self.hp = false
             self.type = 2
             if wall then
-                if random() < 0.1 then
-                    self.type = random(6, 9)
+                -- Randomly spawning a gem when a wall is broken
+                if random() < 0.05 then
+                    self.type = wRand({80, 10, 10}) + 6
                     self.maxHP = tileData[self.type].maxHP
                     self.hp = self.maxHP
                     self.mined = false
@@ -150,7 +158,7 @@ function entity:draw()
             lg.setColor(self.type[1], self.type[2], self.type[3], shade)
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
         else
-            lg.setColor(1, 1, 1, shade)
+            lg.setColor(self.color[1], self.color[2], self.color[3], shade)
             lg.draw(tileAtlas, tiles[self.type + 16], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             lg.setBlendMode("multiply", "premultiplied")
             lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)

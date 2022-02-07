@@ -1,23 +1,16 @@
 -- Various utility functions
-
-function weightedRandom(weights)
-	local weightSum = 0
-	for i,v in ipairs(weights) do
-		weightSum = weightSum + v
-	end
-
-	local rnd = weightSum * math.random()
-	local sel = 0
-	for i,v in ipairs(weights) do
-		if v < rnd then
-			sel = i
-			break
-		end
-		rnd = rnd - v
-	end	
-	return sel
+function wRand(weights)
+    local weightSum = 0
+    for i,v in ipairs(weights) do weightSum = weightSum + v end
+    local target = weightSum * random()
+    local rSum = 0
+    for i,v in ipairs(weights) do
+        rSum = rSum + v
+        if rSum > target then
+            return i
+        end
+    end
 end
-
 
 function require_folder(folder)
     if fs.getInfo(folder) then
