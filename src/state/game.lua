@@ -128,11 +128,12 @@ function game:drawHud()
     for k, v in pairs(self.player.inventory) do
         local x = lg.getWidth() * 0.95
         local y = lg.getHeight() - (lg.getHeight() * 0.08) * i
-        lg.draw(tileAtlas, tiles[self.icon[k]], x, y - 50 , 0, (config.graphics.tileSize * scale_x) / config.graphics.assetSize, (config.graphics.tileSize * scale_x) / config.graphics.assetSize)
+        lg.setColor(color.white)
+        lg.draw(tileAtlas, tiles[self.icon[k]], x, y - 60 , 0, (config.graphics.tileSize * scale_x) / config.graphics.assetSize, (config.graphics.tileSize * scale_x) / config.graphics.assetSize)
 
-        lg.setColor(1, 1, 1, 1)
+        setColor(unpack(color[k:lower()]))
         lg.setFont(font.regular)
-        lg.printf(v, -lg.getWidth() * 0.06, y * 0.92, lg.getWidth(), "right")
+        lg.printf(v, -lg.getWidth() * 0.06, y * 0.95, lg.getWidth(), "right")
         i = i + 1
     end
 end
@@ -166,13 +167,17 @@ function game:draw()
 
 
     if config.debug.enabled then
-        lg.setColor(1, 0.5, 0)
+        lg.setColor(1, 0, 0)
         local all, all_len = self.world:query()
         local bumpItems = self.world:getBumpWorld():countItems()
-        lg.print("entities: "..len.."/"..all_len..
+        lg.setFont(font.tiny)
+        lg.printf("FPS: "..love.timer.getFPS()..
+        "\nEntities: "..len.."/"..all_len..
         "\nX: "..floor(self.player.x).." ("..self.player.gridX..") Y: "..floor(self.player.y).." ("..self.player.gridY..")"..
         "\nChunkX: "..self.player.chunkX.." ChunkY: "..self.player.chunkY..
-        "\nBump items: "..bumpItems.."\nSeed: "..tostring(self.seed), 12, 80)
+        "\nLoaded chunks: "..worldGen.loadedChunkCount..
+        "\nBump items: "..bumpItems..
+        "\nWorld name: "..self.worldName.." World seed: "..tostring(self.seed), -12, 12, lg.getWidth(), "center")
         worldGen:draw()
     end
 

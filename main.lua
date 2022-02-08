@@ -35,14 +35,14 @@ function love.load()
         window = {
             width = 1024,
             height = 576,
-            fullscreen = false,
+            fullscreen = true,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
             useLight = true,
             useShaders = true,
             bloom = 0.4,
-            lightDistance = 400,
+            lightDistance = 500,
             ambientLight = 0.3,
             lightColor = {1, 0.9, 0.8},
             tileSize = 40,
@@ -53,7 +53,7 @@ function love.load()
             chunkSize = 6
         },
         debug = {
-            enabled = false,
+            enabled = true,
             text_color = {255, 144, 79},
             showChunkBorders = false,
             showCollision = false,
@@ -158,6 +158,8 @@ function love.keypressed(key)
 
     if key == "f1" then
         console:setVisible(true)
+    elseif key == "f2" then
+        config.debug.enabled = not config.debug.enabled
     end
     -- DEBUG KEYS
     if state.loadedStateName == "game" and not console:getVisible() then

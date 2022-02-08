@@ -316,7 +316,6 @@ function worldGen:updateWorld()
 end
 
 function worldGen:draw()
-    lg.print("Loaded Chunks: "..self.loadedChunkCount, 12, 48)
 
     if config.debug.showChunkBorders then
         camera:push()
@@ -336,7 +335,7 @@ function worldGen:draw()
 
         local showTiles = true
         if showTiles then
-            lg.setColor(0, 1, 1)
+            lg.setColor(1, 0.5, 0)
             lg.setFont(font.tiny)
             for _, col in pairs(self.tiles) do
                 for _, tile in pairs(col) do

@@ -127,7 +127,7 @@ function entity:mine()
                     _PLAYER.inventory[tileData[self.type].type] = 0
                 end
                 _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + dropCount
-                floatText:new("+"..dropCount, self.x, self.y, font.regular)
+                floatText:new("+"..dropCount, self.x, self.y, font.regular, color[ tileData[self.type].type:lower() ])
             else
                 if self.bumpWorld:hasItem(self) then
                     self.bumpWorld:remove(self)

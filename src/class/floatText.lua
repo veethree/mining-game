@@ -1,3 +1,4 @@
+-- NOTE: This takes colors in the range 0-255!
 local floatText = {
     list = {}
 }
@@ -32,9 +33,10 @@ function floatText:draw()
         -- Shadow
         lg.setColor(0, 0, 0, v.alpha)
         lg.setFont(v.font)
-        lg.print(v.text, v.x, v.y + lg.getHeight() * 0.01)
+        lg.print(v.text, v.x, v.y + ((v.font:getAscent() - v.font:getDescent()) * 0.1 ))
         --Text
-        lg.setColor(v.color[1], v.color[2], v.color[3], v.alpha)
+        local r, g, b = unpack(v.color)
+        setColor(r, g, b, v.alpha * 255)
         lg.setFont(v.font)
         lg.print(v.text, v.x, v.y)
     end
