@@ -70,6 +70,7 @@ local diamond = 7
 local ruby = 8
 local tanzenite = 9
 local water = 10
+local flowingWater = 11
 
 local tiles = {}
 
@@ -116,9 +117,6 @@ if type(chunksToGenerate) == "table" then
                         end
                     end
                     -- Water
-                    --if love.math.random() < 0.01 then
-                    --    tile = water
-                    --end
                 else
                     --if fractalNoise(tileX, tileY, seed - 100, noiseScale * 0.4, 5, 0.2, 4) > 0.7 then
                         --tile = math.floor(noise(tileX * noiseScale, tileY * noiseScale, seed) * 4) + 6

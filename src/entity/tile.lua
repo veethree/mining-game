@@ -48,8 +48,13 @@ local tileData = {
     },
     {
         type = "Water",
-        maxHP = 9999,
-        drop = {1, 1}
+        maxHP = 1,
+        drop = false
+    },
+    {
+        type = "WaterSource",
+        maxHP = 1,
+        drop = false
     }
 }
 
@@ -59,6 +64,7 @@ local biomes = {
     {1, 0.3, 0.9},
     {1, 0.2, 0.2},
 }
+
 
 function entity:load(data, ecs)
     self.bumpWorld = ecs.bumpWorld
@@ -72,8 +78,10 @@ function entity:load(data, ecs)
     self.gridY = math.floor(self.y / floor(config.graphics.tileSize * scale_x))
     self.hover = false
 
-    self.texture = data.texture or false
+    self.source = false -- Used for wudder 
+
     self.type = data.type
+    self.texture = self.type + 16
     self.biome = data.biome
 
     self.color = {1, 1, 1}
@@ -92,6 +100,20 @@ function entity:load(data, ecs)
     if self.type == 1 then
         self.bumpWorld:add(self, self.x, self.y, self.width, self.height) 
     end
+
+    --Flowng water
+    if self.type == 11 then
+        self.texture = self.texture - 1
+    end
+end
+
+function entity:setType(type)
+    self.type = type
+    self.texture = self.type + 16
+    if self.type == 11 then
+        self.texture = self.texture - 1
+    end
+
 end
 
 function entity:mine()
@@ -99,26 +121,31 @@ function entity:mine()
         self.hp = self.hp - 1
         if self.hp < 1 then
             local wall = false
-            if self.type > 2 then
+            local dropCount = random(tileData[self.type].drop[1], tileData[self.type].drop[2])
+            if self.type > 2 and tileData[self.type].drop then
                 if not _PLAYER.inventory[tileData[self.type].type] then
                     _PLAYER.inventory[tileData[self.type].type] = 0
                 end
-                _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + random(tileData[self.type].drop[1], tileData[self.type].drop[2])
+                _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + dropCount
+                floatText:new("+"..dropCount, self.x, self.y, font.regular)
             else
-                self.bumpWorld:remove(self)
-                wall = true
+                if self.bumpWorld:hasItem(self) then
+                    self.bumpWorld:remove(self)
+                    wall = true
+                end
             end
             self.hp = false
-            self.type = 2
+            self:setType(2)
             if wall then
                 -- Randomly spawning a gem when a wall is broken
                 if random() < 0.05 then
-                    self.type = wRand({80, 10, 10}) + 6
+                    self:setType(wRand({80, 10, 10}) + 6)
                     self.maxHP = tileData[self.type].maxHP
                     self.hp = self.maxHP
                     self.mined = false
                 end
             end
+
 
             self.chunk.modified = true
         end
@@ -159,7 +186,7 @@ function entity:draw()
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
         else
             lg.setColor(self.color[1], self.color[2], self.color[3], shade)
-            lg.draw(tileAtlas, tiles[self.type + 16], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+            lg.draw(tileAtlas, tiles[self.texture], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             lg.setBlendMode("multiply", "premultiplied")
             lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
             lg.rectangle("fill", self.x, self.y, self.width, self.height)
@@ -188,6 +215,14 @@ function entity:draw()
                 local frame = #tileBreak - math.floor((#tileBreak / self.maxHP) * self.hp)
                 lg.draw(tileBreakImg, tileBreak[frame], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             end
+        end
+
+        if self.source and false then
+            lg.setColor(1, 1, 0)
+            local sx = self.source.x * self.width
+            local sy = self.source.y * self.height
+            lg.line(self.x + self.width / 2, self.y + self.height / 2, sx, sy)
+            lg.print(self.source.x.." "..self.source.y, self.x, self.y)
         end
 
     end

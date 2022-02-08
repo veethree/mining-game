@@ -40,8 +40,10 @@ function love.load()
         },
         graphics = {
             useLight = true,
+            useShaders = true,
+            bloom = 0.4,
             lightDistance = 400,
-            ambientLight = 0.2,
+            ambientLight = 0.3,
             lightColor = {1, 0.9, 0.8},
             tileSize = 40,
             assetSize = 16
@@ -51,11 +53,11 @@ function love.load()
             chunkSize = 6
         },
         debug = {
-            enabled = true,
+            enabled = false,
             text_color = {255, 144, 79},
             showChunkBorders = false,
             showCollision = false,
-            saveChunks = true,
+            saveChunks = false,
             playerCollision = true
         }
     }
@@ -75,6 +77,10 @@ function love.load()
     -- Creating window
     love.window.setMode(config.window.width, config.window.height, {fullscreen=config.window.fullscreen})
     love.window.setTitle(config.window.title)
+
+
+    -- POSTER
+    poster = require("src.lib.poster")
 
     lg.setDefaultFilter("nearest", "nearest")
     lg.setLineStyle("rough")
@@ -129,14 +135,12 @@ function love.draw()
 
     note:draw()
 
-    lg.setColor(1, 0, 1)
-    lg.print(love.timer.getFPS(), 12, 12)
-
     console:draw()
 
     local mx, my = lm.getPosition()
     lg.setColor(1, 1, 1, 1)
     lg.circle("fill", mx, my, 2 * scale_x)
+    lg.circle("line", mx, my, 4 * scale_x)
 end
 
 function love.keypressed(key)
@@ -159,10 +163,16 @@ function love.keypressed(key)
     if state.loadedStateName == "game" and not console:getVisible() then
         if key == "l" then
             config.graphics.useLight = not config.graphics.useLight
+            note:new("Lights: "..tostring(config.graphics.useLight))
         elseif key == "b" then
             config.debug.showChunkBorders = not config.debug.showChunkBorders
+            note:new("Show chunk borders: "..tostring(config.debug.showChunkBorders))
         elseif key == "c" then
             config.debug.showCollision = not config.debug.showCollision
+            note:new("Show collisions: "..tostring(config.debug.showCollision))
+        elseif key == "p" then
+            config.graphics.useShaders = not config.graphics.useShaders
+            note:new("Shaders: "..tostring(config.graphics.useShaders))
         end
     end
 end

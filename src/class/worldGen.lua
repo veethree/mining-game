@@ -4,7 +4,7 @@ function worldGen:load(data)
     -- World gen settings
     self.chunkSize = config.settings.chunkSize
     self.tileSize = floor(config.graphics.tileSize * scale_x)
-    self.renderDistance = 4 -- How many chunks in each direction to generate at a time
+    self.renderDistance = 3 -- How many chunks in each direction to generate at a time
     self.maxChunkDistance = self.renderDistance * 2 -- How far, In chunk coordinates before a chunk is unloaded
 
     self.chunkSaveTick = 0
@@ -28,7 +28,7 @@ function worldGen:load(data)
 
 
     self.worldTick = 0
-    self.worldTickRate = 0.4 -- Ticks per second
+    self.worldTickRate = 2 -- Ticks per second
     print("WorldGen loaded")
 end
 
@@ -94,10 +94,6 @@ function worldGen:findPlayerSpawnTile()
             self.player.control = true
             self.player:teleport(spawnX, spawnY)
             self:centerPlayerOnTile()
-            note:new("Player spawned", "success")
-            print("Spawned player")
-        else
-            print("Failed to spawn player")
         end
     end
 end
@@ -154,7 +150,8 @@ function worldGen:saveChunkToFile(chunk)
                 biome = tile.biome,
                 type = tile.type,
                 maxHP = tile.maxHP,
-                hp = tile.hp
+                hp = tile.hp,
+                source = tile.source
             }
         end
 
@@ -304,23 +301,22 @@ function worldGen:updateWorld()
             end
         end
 
-        -- Fuckin round'
-        if tile.type == 100 then
-            for i,v in ipairs(adjescent) do
-                if v.type == 2 then
-                    v.type = 10
-                    v.color = {0, 0, 1}
-                end
+        local radiationDistance = 5
+        if tile.type == 6 then
+            local distance = fmath.distance(tile.gridX, tile.gridY, self.player.gridX, self.player.gridY)
+            if distance < radiationDistance then
+                self.player.radiation = self.player.radiation + (radiationDistance - distance) * 0.1
+            else
+                self.player.radiation = self.player.radiation - 0.01
+                if self.player.radiation < 0 then self.player.radiation = 0 end
             end
         end
-
 
     end)
 end
 
 function worldGen:draw()
-    lg.print("Loaded Chunks: "..self.loadedChunkCount..
-    "\nWorldTick: "..self.worldTick, 12, 48)
+    lg.print("Loaded Chunks: "..self.loadedChunkCount, 12, 48)
 
     if config.debug.showChunkBorders then
         camera:push()

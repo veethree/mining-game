@@ -24,8 +24,10 @@ function entity:load(data, ecs)
     self.oChunkX = 0
     self.oChunkY = 0
 
-
+    -- Player stats 
     self.reach = 6
+    self.health = 100
+    self.radiation = 0
 
     self.color = {1, 1, 1}
 
@@ -74,6 +76,13 @@ end
 
 function entity:draw()
     if self.control then
+        -- Radiation
+        if self.radiation > 5 then
+            if math.random() < 0.1 then
+                self.health = self.health - (self.radiation * 0.01)
+            end
+        end
+
         lg.setColor(self.color)
         --lg.rectangle("fill", self.x, self.y, config.graphics.tileSize * scale_x, config.graphics.tileSize * scale_x)
         if self.moving then

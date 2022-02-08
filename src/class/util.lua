@@ -15,8 +15,12 @@ end
 function require_folder(folder)
     if fs.getInfo(folder) then
         for i,v in ipairs(fs.getDirectoryItems(folder)) do
-            if get_file_type(v) == "lua" then
-                _G[get_file_name(v)] = require(folder.."."..get_file_name(v))
+            if fs.getInfo(folder.."/"..v).type == "directory" then
+                _G[v] = require(folder.."."..v)
+            else
+                if get_file_type(v) == "lua" then
+                    _G[get_file_name(v)] = require(folder.."."..get_file_name(v))
+                end
             end
         end
     else
@@ -35,7 +39,7 @@ function get_file_type(file_name)
 end
 
 function get_file_name(file_name)
-    return string.match(file_name, ".+%."):sub(1, -2)
+    return string.match(file_name, ".+%."):sub(1, -2) 
 end
 
 -- Converts colors from 0-255 to 0-1
