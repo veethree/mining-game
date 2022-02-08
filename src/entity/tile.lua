@@ -1,70 +1,5 @@
+-- TILE ENTITY
 local entity = {}
-
--- Data relating to different tile types
-local tileData = {
-    {
-        type = "Wall",
-        maxHP = 2,
-        drop = {0, 0}
-    },
-    {
-        type = "Floor",
-        maxHP = false
-    },
-    {
-        type = "Coal",
-        maxHP = 2,
-        drop = {3, 6}
-    },
-    {
-        type = "Iron",
-        maxHP = 10,
-        drop = {1, 3}
-    },
-    {
-        type = "Gold",
-        maxHP = 5,
-        drop = {1, 2}
-    },
-    {
-        type = "Uranium",
-        maxHP = 20,
-        drop = {1, 1}
-    },
-    {
-        type = "Diamond",
-        maxHP = 15,
-        drop = {1, 2}
-    },
-    {
-        type = "Ruby",
-        maxHP = 18,
-        drop = {1, 1}
-    },
-    {
-        type = "Tanzenite",
-        maxHP = 30,
-        drop = {1, 1}
-    },
-    {
-        type = "Water",
-        maxHP = 1,
-        drop = false
-    },
-    {
-        type = "WaterSource",
-        maxHP = 1,
-        drop = false
-    }
-}
-
-local biomes = {
-    {1, 0.9, 0.9},
-    {0.1, 0.6, 0.3},
-    {1, 0.3, 0.9},
-    {1, 0.2, 0.2},
-}
-
 
 function entity:load(data, ecs)
     self.bumpWorld = ecs.bumpWorld
@@ -78,78 +13,58 @@ function entity:load(data, ecs)
     self.gridY = math.floor(self.y / floor(config.graphics.tileSize * scale_x))
     self.hover = false
 
-    self.source = false -- Used for wudder 
-
-    self.type = data.type
-    self.texture = self.type + 16
-    self.biome = data.biome
+    self:setType(data.type)
 
     self.color = {1, 1, 1}
 
-    -- Tile type data
-    self.maxHP = false
-    if tonumber(self.type) then
-        if self.type > 0 then
-            self.maxHP = tileData[self.type].maxHP
-            self.hp = self.maxHP
-            self.mined = false
-        end
-    end
-
-    -- Collider tile
-    if self.type == 1 then
+    -- Creating bump item if solid
+    if self.tileData.solid then
         self.bumpWorld:add(self, self.x, self.y, self.width, self.height) 
-    end
-
-    --Flowng water
-    if self.type == 11 then
-        self.texture = self.texture - 1
     end
 end
 
 function entity:setType(type)
-    self.type = type
-    self.texture = self.type + 16
-    if self.type == 11 then
-        self.texture = self.texture - 1
+    -- Housecleaning before changing type
+    if not tileData[type].solid then
+        if self.bumpWorld:hasItem(self) then
+            self.bumpWorld:remove(self)
+        end
     end
 
+    -- Changing type
+    self.type = type
+    self.tileData = tileData[self.type]
+    self.maxHP = self.tileData.maxHP
+    self.hp = self.maxHP
+    self.mined = false
 end
 
 function entity:mine()
-    if self.hp then
+    if self.tileData.destructible then
         self.hp = self.hp - 1
-        if self.hp < 1 then
-            local wall = false
-            local dropCount = random(tileData[self.type].drop[1], tileData[self.type].drop[2])
-            if self.type > 2 and tileData[self.type].drop then
-                if not _PLAYER.inventory[tileData[self.type].type] then
-                    _PLAYER.inventory[tileData[self.type].type] = 0
+        if self.hp < 0 then
+            local nextType = 2
+            -- Drops
+            local dropCount = random(self.tileData.drop[1], self.tileData.drop[2])
+            if dropCount > 0 then
+                if not _PLAYER.inventory[self.tileData.type] then
+                    _PLAYER.inventory[self.tileData.type] = 0
                 end
-                _PLAYER.inventory[tileData[self.type].type] = _PLAYER.inventory[tileData[self.type].type] + dropCount
-                floatText:new("+"..dropCount, self.x, self.y, font.regular, color[ tileData[self.type].type:lower() ])
-            else
-                if self.bumpWorld:hasItem(self) then
-                    self.bumpWorld:remove(self)
-                    wall = true
-                end
+                _PLAYER.inventory[self.tileData.type] = _PLAYER.inventory[self.tileData.type] + dropCount
+                floatText:new("+"..dropCount, self.x, self.y, font.regular, color[ self.tileData.type:lower() ])
             end
-            self.hp = false
-            self:setType(2)
-            if wall then
-                -- Randomly spawning a gem when a wall is broken
+
+            -- If the mined tile is a wall, Maybe replace it with a gem
+            if self.tileData.type == "Wall" then
                 if random() < 0.05 then
-                    self:setType(wRand({80, 10, 10}) + 6)
-                    self.maxHP = tileData[self.type].maxHP
-                    self.hp = self.maxHP
-                    self.mined = false
+                    nextType = wRand({80, 10, 10}) + 6
                 end
             end
 
-
+            self:setType(nextType)
             self.chunk.modified = true
         end
-    end
+    end    
 end
 
 function entity:draw()
@@ -158,13 +73,12 @@ function entity:draw()
         local los =  bresenham.los(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY, function(x, y)
             if worldGen.tiles[y] then
                 if worldGen.tiles[y][x] then
-                    if worldGen.tiles[y][x].type > 1 then
+                    if not worldGen.tiles[y][x].tileData.solid then
                         return true
                     end
                end
             end
-            end)
-
+        end)
 
         -- Calculating lighting
         local shade = 1
@@ -181,50 +95,34 @@ function entity:draw()
             end
         end
 
-        if type(self.type) == "table" then
-            lg.setColor(self.type[1], self.type[2], self.type[3], shade)
-            lg.rectangle("fill", self.x, self.y, self.width, self.height)
-        else
-            lg.setColor(self.color[1], self.color[2], self.color[3], shade)
-            lg.draw(tileAtlas, tiles[self.texture], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
-            lg.setBlendMode("multiply", "premultiplied")
-            lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
-            lg.rectangle("fill", self.x, self.y, self.width, self.height)
-            lg.setBlendMode("alpha")
-        end
+        -- Drawing tile
+        lg.setColor(self.color)
+        lg.draw(tileAtlas, tiles[self.tileData.textureID], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
 
-        -- Selection
-        self.hover = false
-        local mx, my = camera:getMouse()
-        if mx > self.x and mx < self.x + self.width and my > self.y and my < self.y + self.height then
-            if fmath.distance(self.gridX, self.gridY, _PLAYER.gridX, _PLAYER.gridY) < _PLAYER.reach then
-                self.hover = true
-            end
-        end
+        -- Drawing light
+        lg.setBlendMode("multiply", "premultiplied")
+        lg.setColor(config.graphics.lightColor[1], config.graphics.lightColor[2], config.graphics.lightColor[3], shade)
+        lg.rectangle("fill", self.x, self.y, self.width, self.height)
+        lg.setBlendMode("alpha")
 
+        -- Drawing hover indicator
         if self.hover then
             lg.setBlendMode("add")
             lg.setColor(1, 1, 1, 1)
             lg.rectangle("line", self.x + 1, self.y + 1, self.width - 2, self.height - 2)
+            lg.setColor(1, 1, 1, 0.1)
+            lg.rectangle("fill", self.x + 1, self.y + 1, self.width - 2, self.height - 2)
             lg.setBlendMode("alpha")
         end
 
-        -- Breaking
+        -- Drawing breaking indicator
         if self.hp then
             if self.hp < self.maxHP then
                 local frame = #tileBreak - math.floor((#tileBreak / self.maxHP) * self.hp)
+                lg.setColor(1, 1, 1, 1)
                 lg.draw(tileBreakImg, tileBreak[frame], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             end
         end
-
-        if self.source and false then
-            lg.setColor(1, 1, 0)
-            local sx = self.source.x * self.width
-            local sy = self.source.y * self.height
-            lg.line(self.x + self.width / 2, self.y + self.height / 2, sx, sy)
-            lg.print(self.source.x.." "..self.source.y, self.x, self.y)
-        end
-
     end
 end
 

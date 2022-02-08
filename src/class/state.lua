@@ -15,7 +15,6 @@ end
 -- data: Anything you want to pass to the state in the states load function
 function state:load(state_name, data)
     self.state = nil
-    collectgarbage("collect")
     if self.state_list[state_name] then
         self.loadedStateName = state_name
         self.state = fs.load(self.state_list[state_name])()

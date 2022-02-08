@@ -21,20 +21,30 @@ function game:load(data)
         note:new("Loaded world '"..self.worldName.."'", "success")
     end
 
+    -- Initializing the ECS world
     self.world = ecs.new()
     self.world:loadSystemFromFolder("src/system")
+
     --Exposing self.world for debug purposes
     if config.debug.enabled then
         _WORLD = self.world
     end
 
+    -- Initializing player
     self.player = self.world:newEntity("src/entity/player.lua", playerX, playerY, {x = playerX, y = playerY, inventory = playerInventory, playerLoaded = playerLoaded})
 
+    -- Expsing self.player for debug purposes
     _PLAYER = self.player
 
+    -- Initializing worldGen
     worldGen:load({player = self.player, world = self.world, worldName = self.worldName, seed = self.seed})
-    self.renderBuffer = worldGen.tileSize * 2
 
+    
+    self.renderBuffer = worldGen.tileSize * 2
+    self.hoverEntity = false -- Contains the entity the mouse is over, Used for mining
+    self.time = 0 -- Timer used for shader animations
+
+    -- Icon tile id's
     self.icon = {
         Coal = 1,
         Iron = 2,
@@ -46,7 +56,6 @@ function game:load(data)
         health = 41,
         radiation = 42
     }
-
 
     -- Poster stuff
     self.canvas = poster.new()
@@ -84,7 +93,6 @@ function game:load(data)
         {"horizontalBlur", "amount", 3},
     })
 
-    self.time = 0
 
 end
 
@@ -94,15 +102,37 @@ function game:unload()
 end
 
 function game:update(dt)
-    self.time = self.time + dt
-    if self.time > math.pi * 2 then self.time = 0 end
-    smoof:update(dt)
+    -- Querying for visible entities
+    self.visibleEntities = self.world:queryRect(camera.x - self.renderBuffer, camera.y - self.renderBuffer, lg.getWidth() + self.renderBuffer * 2, lg.getHeight() + self.renderBuffer * 2)
+
+    -- Storing the entity the mouse is hovering over
+    local mx, my = camera:getMouse()
+    for i,v in ipairs(self.visibleEntities) do
+        v.hover = false
+        if fmath.pointInRect(mx, my, v.x, v.y, v.width, v.height) and fmath.distance(v.gridX, v.gridY, self.player.gridX, self.player.gridY) < self.player.reach then
+            v.hover = true
+            self.hoverEntity = v
+        end
+    end
+    
+    -- Updating camera
     camera:lookAtEntity(self.player)
     camera:update(dt)
+    
+    -- Updating world
     worldGen:update(dt)
-    floatText:update(dt)
+
+    -- Internal timer used for shaders
+    self.time = self.time + dt
+    if self.time > math.pi * 2 then self.time = 0 end
+    -- Settings macros
     self.shaders:setMacro("rad", self.player.radiation)
     self.shaders:setMacro("time", self.time)
+
+    -- Mining
+    if lm.isDown(1) and self.hoverEntity then
+        self.player:mine(self.hoverEntity) 
+    end
 end
 
 function game:drawHud()
@@ -139,10 +169,9 @@ function game:drawHud()
 end
 
 function game:draw()
-    local entity_list, len = self.world:queryRect(camera.x - self.renderBuffer, camera.y - self.renderBuffer, lg.getWidth() + self.renderBuffer * 2, lg.getHeight() + self.renderBuffer * 2)
     self.canvas:set()
     camera:push()
-    self.world:update(entity_list)
+    self.world:update(self.visibleEntities)
 
     self.player:draw()
 
@@ -172,7 +201,7 @@ function game:draw()
         local bumpItems = self.world:getBumpWorld():countItems()
         lg.setFont(font.tiny)
         lg.printf("FPS: "..love.timer.getFPS()..
-        "\nEntities: "..len.."/"..all_len..
+        "\nEntities: "..#self.visibleEntities.."/"..all_len..
         "\nX: "..floor(self.player.x).." ("..self.player.gridX..") Y: "..floor(self.player.y).." ("..self.player.gridY..")"..
         "\nChunkX: "..self.player.chunkX.." ChunkY: "..self.player.chunkY..
         "\nLoaded chunks: "..worldGen.loadedChunkCount..
@@ -246,27 +275,14 @@ function game:drawMinimap(all)
 end
 
 function game:mousepressed(x, y, k)
-    local entity_list, len = self.world:queryRect(camera.x - self.renderBuffer, camera.y - self.renderBuffer, lg.getWidth() + self.renderBuffer * 2, lg.getHeight() + self.renderBuffer * 2)
-    for i,v in ipairs(entity_list) do
-        if tonumber(v.type) then
-            if v.maxHP and v.hover then
-                v:mine()
-            end
-        end
-    end
-    if kb.isDown("lshift") then
-        for i,v in ipairs(entity_list) do
-            if tonumber(v.type) then
-                if v.hover then
-                    if k == 1 then
-                        v:setType(10)
-                    elseif k == 2 then
-                        v:setType(10)
-                    end
-                end
-            end
-        end
-    end
+    --local entity_list, len = self.world:queryRect(camera.x - self.renderBuffer, camera.y - self.renderBuffer, lg.getWidth() + self.renderBuffer * 2, lg.getHeight() + self.renderBuffer * 2)
+    --for i,v in ipairs(entity_list) do
+    --    if tonumber(v.type) then
+    --        if v.maxHP and v.hover then
+    --            v:mine()
+    --        end
+    --    end
+    --end
 end
 
 function game:keypressed(key)

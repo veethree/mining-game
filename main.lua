@@ -1,5 +1,5 @@
 NAME = "Cave game"
-VERSION = 0.1
+VERSION = "v0.01"
  
 -- GLOBALS
 lg = love.graphics
@@ -35,7 +35,7 @@ function love.load()
         window = {
             width = 1024,
             height = 576,
-            fullscreen = true,
+            fullscreen = false,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
@@ -127,6 +127,8 @@ function love.update(dt)
     state:update(dt)
     note:update(dt)
     console:update(dt)
+    smoof:update(dt)
+    floatText:update(dt)
 end
 
 function love.draw()

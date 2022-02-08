@@ -1,21 +1,25 @@
 local chunksToGenerate, chunkSize, tileSize, seed = ...
 
+-- Tonumbering the seed in case it comes in as a string
 seed = tonumber(seed)
 
+-- Importing some löve modules
 love.math = require("love.math")
 love.mouse = require("love.mouse")
 
+-- Shorthands cause i'm lazy
 local fs = love.filesystem
 local noise = love.math.noise
 
 local noiseScale = 0.6 -- Global noise scale
 
+-- Loading biome files
 local biomes = {}
 for _, file in ipairs(fs.getDirectoryItems("src/biome")) do
     biomes[#biomes+1] = fs.load("src/biome/"..file)()
 end
 
-
+-- A fractal noise function for more interesting noise
 function fractalNoise(x, y, seed, scale, iterations, ampScale, freqScale)
     -- Normal function
     local function normal(value, min, max)
@@ -54,12 +58,15 @@ function biomeNoise(x, y, scale)
     return math.floor((noise(x * scaleBase, y * scaleBase, seed + 100) * 0.8 + noise(x * scaleDetail, y * scaleDetail, seed + 100) * 0.2) * biomeCount + 1)
 end
 
+-- A noise function that returs a boolean
 function generateNoise(x, y, scaleBase, scaleDetail, thresh, ratio1, ratio2, seedOffset)
     scaleBase = scaleBase * noiseScale
     scaleDetail = scaleDetail * noiseScale
     return noise(x * scaleBase, y * scaleBase, seed + seedOffset) * ratio1 + noise(x * scaleDetail, y * scaleDetail, seed + seedOffset) * ratio2 > thresh and true or false
 end
 
+-- Tile definitions. 
+-- !! Should probably be moved somewhere where it can be accessed globally
 local wall = 1
 local ground = 2
 local coal = 3
@@ -72,9 +79,7 @@ local tanzenite = 9
 local water = 10
 local flowingWater = 11
 
-local tiles = {}
-
-
+-- Generating the requested chunks
 if type(chunksToGenerate) == "table" then
     for i,v in ipairs(chunksToGenerate) do
         local finalChunk = {
@@ -82,17 +87,20 @@ if type(chunksToGenerate) == "table" then
             y = v.y,
             tiles = {}
         }
+        -- the world coordinates of the chunk
         local chunkWorldX = v.x * chunkSize * tileSize
         local chunkWorldY = v.y * chunkSize * tileSize
 
         local chunk = {}
+        local chunkTiles = {} -- This is a 2d table of the tiles in the current chunk
         local biome = biomeNoise(v.x, v.y, noiseScale)
         for y=1, chunkSize do
             chunk[y] = {}
             for x=1, chunkSize do
-                -- Coordinates
+                -- Grid coordinates for the tile
                 local tileX = (v.x * chunkSize) + x
                 local tileY = (v.y * chunkSize) + y
+                -- World coordinates for the tile
                 local worldX = chunkWorldX + (x * tileSize)
                 local worldY = chunkWorldY + (y * tileSize)
 
@@ -102,7 +110,7 @@ if type(chunksToGenerate) == "table" then
                 -- Tile type deciding
                 local tileBiome = biomes[biome]
                     
-                -- x, y, scale, iterations, ampScale, freqScale
+                -- "sway" is an offset, based on noise, Used to generate slightly different terrain at different coordinates
                 local sway = -1 + (noise(tileY * 0.01, tileX * 0.01, seed) * 2)
                 local swayAmount = 0.05
                 if generateNoise(tileX, tileY, tileBiome.caveScaleBase, tileBiome.caveScaleDetail, tileBiome.caveThresh + (swayAmount * sway), tileBiome.caveRatio1, tileBiome.caveRatio2, 0) then
@@ -116,11 +124,6 @@ if type(chunksToGenerate) == "table" then
                             end
                         end
                     end
-                    -- Water
-                else
-                    --if fractalNoise(tileX, tileY, seed - 100, noiseScale * 0.4, 5, 0.2, 4) > 0.7 then
-                        --tile = math.floor(noise(tileX * noiseScale, tileY * noiseScale, seed) * 4) + 6
-                    --end
                 end
 
                 chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}

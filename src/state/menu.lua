@@ -96,6 +96,7 @@ function menu:load()
     self.screen = {
         main = {
             label.new(NAME, self.color.success, font.large, 0, lg.getHeight() * 0.2, "center"),
+            label.new(VERSION, self.color.success, font.regular, 12, 12, "left"),
             button.new("New world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.5, self.width * 0.4, self.height * 0.09, newButton),
             button.new("Load world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.6, self.width * 0.4, self.height * 0.09, loadButton),
             button.new("Options", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.7, self.width * 0.4, self.height * 0.09, startButton),

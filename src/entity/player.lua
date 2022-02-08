@@ -15,19 +15,22 @@ function entity:load(data, ecs)
     self.collisonBoxWidth = math.floor(config.graphics.tileSize * scale_x * 0.7)
     self.collisionBoxHeight = math.floor(config.graphics.tileSize * scale_x * 0.5)
 
-    self.speed = 100 * scale_x
-    self.control = false
-
     -- Chunk coordinates, Used to detect when player moves to a new chunk
     self.chunkX = 0
     self.chunkY = 0
     self.oChunkX = 0
     self.oChunkY = 0
 
-    -- Player stats 
+    -- Player attributes
+    self.speed = 100 * scale_x
+    self.control = false
     self.reach = 6
+    self.mineSpeed = 10
+    self.mineTick = 0
     self.health = 100
     self.radiation = 0
+    self.inventory = data.inventory
+    self.playerLoaded = data.playerLoaded
 
     self.color = {1, 1, 1}
 
@@ -41,11 +44,10 @@ function entity:load(data, ecs)
     self.moving = false
     self.direction = "right"
 
-    self.inventory = data.inventory
-    self.playerLoaded = data.playerLoaded
-
+    -- Creating bump item
     self.bumpWorld:add(self, self.x, self.y, self.collisonBoxWidth, self.collisionBoxHeight)
 
+    -- Updating coordinates
     self:updateChunkCoordinates()
     self:updateGridCoordinates()
 end
@@ -72,6 +74,16 @@ function entity:teleport(x, y)
     self:updateGridCoordinates()
     worldGen:updateChunks()
     self._SPATIAL.spatial:update_item_cell(self.x, self.y, self)
+end
+
+function entity:mine(tile)
+    if tile.entityType == "tile" then
+        self.mineTick = self.mineTick + love.timer.getDelta()
+        if self.mineTick > (1 / self.mineSpeed) then
+            tile:mine() 
+            self.mineTick = 0
+        end 
+    end
 end
 
 function entity:draw()
