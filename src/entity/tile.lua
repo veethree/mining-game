@@ -17,10 +17,6 @@ function entity:load(data, ecs)
 
     self.color = {1, 1, 1}
 
-    -- Creating bump item if solid
-    if self.tileData.solid then
-        self.bumpWorld:add(self, self.x, self.y, self.width, self.height) 
-    end
 end
 
 function entity:setType(type)
@@ -37,6 +33,11 @@ function entity:setType(type)
     self.maxHP = self.tileData.maxHP
     self.hp = self.maxHP
     self.mined = false
+    
+    -- Creating bump item if solid
+    if self.tileData.solid then
+        self.bumpWorld:add(self, self.x, self.y, self.width, self.height) 
+    end
 end
 
 function entity:mine()
@@ -47,10 +48,14 @@ function entity:mine()
             -- Drops
             local dropCount = random(self.tileData.drop[1], self.tileData.drop[2])
             if dropCount > 0 then
-                if not _PLAYER.inventory[self.tileData.type] then
-                    _PLAYER.inventory[self.tileData.type] = 0
+                local dropType = self.tileData.type
+                if self.item then
+                    dropType = self.tileData.item
                 end
-                _PLAYER.inventory[self.tileData.type] = _PLAYER.inventory[self.tileData.type] + dropCount
+                if not _PLAYER.inventory[dropType] then
+                    _PLAYER.inventory[dropType] = 0
+                end
+                _PLAYER.inventory[dropType] = _PLAYER.inventory[dropType] + dropCount
                 floatText:new("+"..dropCount, self.x, self.y, font.regular, color[ self.tileData.type:lower() ])
             end
 
@@ -98,6 +103,11 @@ function entity:draw()
         -- Drawing tile
         lg.setColor(self.color)
         lg.draw(tileAtlas, tiles[self.tileData.textureID], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+    
+        -- Drawing tile item
+        if self.tileData.item then
+            lg.draw(tileAtlas, tiles[self.tileData.itemTextureID], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
+        end
 
         -- Drawing light
         lg.setBlendMode("multiply", "premultiplied")
@@ -119,11 +129,12 @@ function entity:draw()
         if self.hp then
             if self.hp < self.maxHP then
                 local frame = #tileBreak - math.floor((#tileBreak / self.maxHP) * self.hp)
-                lg.setColor(1, 1, 1, 1)
+                lg.setColor(1, 1, 1, 0.8)
                 lg.draw(tileBreakImg, tileBreak[frame], self.x, self.y, 0, self.width / config.graphics.assetSize, self.height / config.graphics.assetSize)
             end
         end
     end
+
 end
 
 return entity

@@ -3,7 +3,7 @@ local textbox_meta = {__index = textbox}
 
 local defaultInputFilter = function() return true end
 
-function textbox.new(text, placeholder, color, textColor, textColorSelected, x, y, width, height, inputFilter)
+function textbox.new(text, placeholder, color, textColor, textColorSelected, x, y, width, height, inputFilter, maxLength)
     return setmetatable({
         type = "textbox",
         text = text,
@@ -16,6 +16,7 @@ function textbox.new(text, placeholder, color, textColor, textColorSelected, x, 
         width = width,
         height = height,
         inputFilter = inputFilter or defaultInputFilter,
+        maxLength = maxLength or 100,
         selected = false,
         buttonLeft = tiles[60],
         buttonCenter = tiles[61],
@@ -58,7 +59,7 @@ function textbox:draw()
 end
 
 function textbox:textinput(t)
-    if self.selected and self.inputFilter(t) then
+    if self.selected and self.inputFilter(t) and #self.text < self.maxLength then
         self.text = self.text..t
     end
 end

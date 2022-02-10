@@ -1,6 +1,6 @@
 local console = {}
 
-function setColor(r, g, b, a)
+local function setColor(r, g, b, a)
 	if type(r) == "table" then
 		r, g, b, a = r[1], r[2], r[3], r[4]
 	end
@@ -246,7 +246,7 @@ function console:draw()
 
 		--textBox indicator
 		lg.setColor(1, 1, 1, 1)
-		console.setAlpha(math.sin(self.textBox.indicator.t))
+		--console.setAlpha(math.sin(self.textBox.indicator.t))
 		love.graphics.print(self.textBox.indicator.char, self.textBox.indicator.x, self.textBox.y + self.margin.y)
 		love.graphics.setScissor()
 

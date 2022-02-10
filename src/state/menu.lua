@@ -22,9 +22,20 @@ local function createButton()
         note:new("Please enter a world name!", "danger") 
     else
         local seed = menu.screen.new.seed.text
+        -- If no seed is provided, Use the current time
         if #seed < 1 then
             seed = os.time()
         end
+        if tonumber(seed) then 
+            seed = tonumber(seed) 
+        else
+            seed = hashcode(seed)
+        end
+
+        if seed > maxSeed then
+            seed = maxSeed
+        end
+
         state:load("game", {type = "new", worldName = menu.screen.new.worldName.text, seed = tonumber(seed)})
     end
 end
@@ -105,7 +116,7 @@ function menu:load()
         new = {
             label.new("New world", self.color.success, font.large, 0, lg.getHeight() * 0.2, "center"),
             worldName = textbox.new("", "World name", self.color.fg, self.color.idle, self.color.bg, self.width * 0.3, self.height * 0.5, self.width * 0.4, self.height * 0.09),
-            seed = textbox.new("", "Seed", self.color.fg, self.color.idle, self.color.bg, self.width * 0.3, self.height * 0.6, self.width * 0.4, self.height * 0.09, tonumber),
+            seed = textbox.new("", "Seed", self.color.fg, self.color.idle, self.color.bg, self.width * 0.3, self.height * 0.6, self.width * 0.4, self.height * 0.09, false, 10),
             button.new("Create world", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.7, self.width * 0.4, self.height * 0.09, createButton),
             button.new("Back", self.color.fg, self.color.bg, self.width * 0.3, self.height * 0.8, self.width * 0.4, self.height * 0.09, backButton),
         },

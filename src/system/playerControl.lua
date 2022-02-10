@@ -15,20 +15,16 @@ return {
         if right then
             nx = nx + speed * dt
             e.moving = true
-            e.direction = "right"
         elseif left then
             nx = nx - speed * dt
             e.moving = true
-            e.direction = "left"
         end
         if down then
             ny = ny + speed * dt
             e.moving = true
-            e.direction = "backward"
         elseif up then
             ny = ny - speed * dt
             e.moving = true
-            e.direction = "forward"
         end
 
 

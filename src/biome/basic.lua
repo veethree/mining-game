@@ -85,5 +85,16 @@ return {
             spawnProbability = 1,
             seedOffset = 700
         },
+        {
+            -- Shrub
+            type = "Shrub",
+            scaleBase = 0.5,
+            scaleDetail = 0.2,
+            thresh = 0.55,
+            ratio1 = 0.2,
+            ratio2 = 0.6,
+            spawnProbability = 1,
+            seedOffset = 700
+        },
     }
 }

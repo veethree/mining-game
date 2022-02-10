@@ -78,16 +78,7 @@ function worldGen:findPlayerSpawnTile()
             spawnY = self.player.y
             foundSpawnTile = true
         else
-            self:iterateChunks(function(chunk)
-                for _, tile in ipairs(chunk.tiles) do
-                    if tile.type == 2 then
-                        spawnX = tile.y
-                        spawnY = tile.x
-                        foundSpawnTile = true
-                        break
-                    end
-                end
-            end)
+            foundSpawnTile = true
         end
 
         if foundSpawnTile then
@@ -281,6 +272,7 @@ function worldGen:update(dt)
 end
 
 function worldGen:updateWorld()
+    self.player.inRangeOfRadiation = false
     self:iterateTiles(function(tile)
         -- Gathering adjescent tiles
         local adjescent = {}
@@ -299,16 +291,16 @@ function worldGen:updateWorld()
                     adjescentCount = adjescentCount + 1
                 end
             end
+
         end
 
+        -- Radiation
         local radiationDistance = 5
         if tile.type == 6 then
             local distance = fmath.distance(tile.gridX, tile.gridY, self.player.gridX, self.player.gridY)
             if distance < radiationDistance then
                 self.player.radiation = self.player.radiation + (radiationDistance - distance) * 0.1
-            else
-                self.player.radiation = self.player.radiation - 0.01
-                if self.player.radiation < 0 then self.player.radiation = 0 end
+                self.player.inRangeOfRadiation = true
             end
         end
 

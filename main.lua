@@ -1,5 +1,5 @@
 NAME = "Cave game"
-VERSION = "v0.01"
+VERSION = "v0.02"
  
 -- GLOBALS
 lg = love.graphics
@@ -13,6 +13,10 @@ sin = math.sin
 cos = math.cos
 f = string.format
 floor = math.floor
+
+-- Limiting the max seed to the highets 32-bit integer minus 1000 because the world generation offsets the seed by up to 1000.
+-- Negative seeds are not allowed. At least for now.
+maxSeed = 2147483647 - 1000
 
 
 function love.load()
@@ -35,7 +39,7 @@ function love.load()
         window = {
             width = 1024,
             height = 576,
-            fullscreen = false,
+            fullscreen = true,
             title = NAME.." ["..VERSION.."]"
         },
         graphics = {
@@ -57,7 +61,7 @@ function love.load()
             text_color = {255, 144, 79},
             showChunkBorders = false,
             showCollision = false,
-            saveChunks = false,
+            saveChunks = true,
             playerCollision = true
         }
     }

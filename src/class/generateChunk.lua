@@ -49,7 +49,6 @@ function fractalNoise(x, y, seed, scale, iterations, ampScale, freqScale)
     return normal(value, 0, 1)
 end
 
-
 -- Determines the biome, at x & y
 local biomeCount = #biomes
 function biomeNoise(x, y, scale)
@@ -66,7 +65,6 @@ function generateNoise(x, y, scaleBase, scaleDetail, thresh, ratio1, ratio2, see
 end
 
 -- Tile definitions. 
--- !! Should probably be moved somewhere where it can be accessed globally
 local wall = 1
 local ground = 2
 local coal = 3
@@ -76,8 +74,6 @@ local uranium = 6
 local diamond = 7
 local ruby = 8
 local tanzenite = 9
-local water = 10
-local flowingWater = 11
 
 -- Generating the requested chunks
 if type(chunksToGenerate) == "table" then
@@ -92,8 +88,7 @@ if type(chunksToGenerate) == "table" then
         local chunkWorldY = v.y * chunkSize * tileSize
 
         local chunk = {}
-        local chunkTiles = {} -- This is a 2d table of the tiles in the current chunk
-        local biome = biomeNoise(v.x, v.y, noiseScale)
+        local biome = 1--biomeNoise(v.x, v.y, noiseScale)
         for y=1, chunkSize do
             chunk[y] = {}
             for x=1, chunkSize do
@@ -129,7 +124,6 @@ if type(chunksToGenerate) == "table" then
                 chunk[y][x] = {type = tile, x = worldX, y = worldY, biome = biome}
             end
         end
-
 
         for y=1, #chunk do
             for x=1, #chunk[1] do

@@ -54,7 +54,8 @@ function game:load(data)
         Ruby = 6,
         Tanzenite = 7,
         health = 41,
-        radiation = 42
+        radiation = 42,
+        Shrub = 9
     }
 
     -- Poster stuff
@@ -113,6 +114,7 @@ function game:update(dt)
             v.hover = true
             self.hoverEntity = v
         end
+
     end
     
     -- Updating camera
@@ -159,26 +161,32 @@ function game:drawHud()
         local x = lg.getWidth() * 0.95
         local y = lg.getHeight() - (lg.getHeight() * 0.08) * i
         lg.setColor(color.white)
-        lg.draw(tileAtlas, tiles[self.icon[k]], x, y - 60 , 0, (config.graphics.tileSize * scale_x) / config.graphics.assetSize, (config.graphics.tileSize * scale_x) / config.graphics.assetSize)
+        lg.draw(tileAtlas, tiles[self.icon[k]], x, y - 70 , 0, (config.graphics.tileSize * scale_x) / config.graphics.assetSize, (config.graphics.tileSize * scale_x) / config.graphics.assetSize)
 
-        setColor(unpack(color[k:lower()]))
+        local r, g, b = unpack(color[k:lower()]) 
         lg.setFont(font.regular)
-        lg.printf(v, -lg.getWidth() * 0.06, y * 0.95, lg.getWidth(), "right")
+        
+        setColor(0, 0, 0)
+        lg.printf(v, -lg.getWidth() * 0.06, y * 0.92 + 1, lg.getWidth(), "right")
+        lg.printf(v, -lg.getWidth() * 0.06, y * 0.92 - 1, lg.getWidth(), "right")
+        lg.printf(v, -lg.getWidth() * 0.06 + 1, y * 0.92, lg.getWidth(), "right")
+        lg.printf(v, -lg.getWidth() * 0.06 - 1, y * 0.92, lg.getWidth(), "right")
+
+        setColor(255, 255, 255)
+        lg.printf(v, -lg.getWidth() * 0.06, y * 0.92, lg.getWidth(), "right")
         i = i + 1
     end
 end
 
 function game:draw()
     self.canvas:set()
+    lg.clear()
     camera:push()
     self.world:update(self.visibleEntities)
-
     self.player:draw()
-
     floatText:draw()
     camera:pop()
     self.canvas:unset()
-
 
     lg.setColor(1, 1, 1, 1)
     if config.graphics.useShaders then

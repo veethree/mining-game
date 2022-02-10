@@ -7,6 +7,7 @@ return {
     ruby = {172, 50, 50},
     tanzenite = {39, 85, 165},
     black = {0, 0, 0},
-    white = {1, 1, 1},
+    white = {255, 255, 255},
+    shrub = {99, 76, 60},
 
 }

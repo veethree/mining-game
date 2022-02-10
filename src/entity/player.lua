@@ -31,6 +31,7 @@ function entity:load(data, ecs)
     self.radiation = 0
     self.inventory = data.inventory
     self.playerLoaded = data.playerLoaded
+    self.inRangeOfRadiation = false
 
     self.color = {1, 1, 1}
 
@@ -88,7 +89,27 @@ end
 
 function entity:draw()
     if self.control then
+        -- Facing the player
+        -- I'm sure theres a better way to do this but fuck it
+        local mx, my = camera:getMouse()
+        local angle = math.deg(fmath.angle(self.x, self.y, mx, my))
+
+        if angle > -45 and angle < 45 then
+            self.direction = "right"
+        elseif angle > 45 and angle < 135 then
+            self.direction = "backward"
+        elseif angle < -45 and angle > -135 then
+            self.direction = "forward"
+        else
+            self.direction = "left"
+        end
+        
         -- Radiation
+        if not self.inRangeOfRadiation then
+            self.radiation = self.radiation - 0.1 * love.timer.getDelta()
+            if self.radiation < 0 then self.radiation = 0 end
+        end
+
         if self.radiation > 5 then
             if math.random() < 0.1 then
                 self.health = self.health - (self.radiation * 0.01)
@@ -101,6 +122,7 @@ function entity:draw()
             self.animation[self.direction]:start()
             self.animation[self.direction]:update(love.timer.getDelta())
         else
+            self.animation[self.direction]:reset()
             self.animation[self.direction]:stop()
         end
         local x = self.x - (self.tileSize / 2)
